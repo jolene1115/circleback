@@ -12,10 +12,6 @@ __pycache__/
 *.db-wal
 *.db-shm
 
-# frontend
-node_modules/
-.next/
-
 # personal test recordings
 samples/*
 !samples/.gitkeep
