@@ -2,7 +2,6 @@
 
 import json
 import os
-import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -29,22 +28,20 @@ def load_api_key() -> str:
     load_dotenv(ENV_PATH)
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
-        print(
-            "Missing GEMINI_API_KEY. Add it to the .env file at the project root.",
-            file=sys.stderr,
+        raise ValueError(
+            "Missing GEMINI_API_KEY. Add it to the .env file at the project root."
         )
-        sys.exit(1)
     return api_key
 
 
-def build_feedback_prompt(question: str) -> str:
+def build_feedback_prompt(question: str, answer: str) -> str:
     return f"""You are a beginner-friendly interview coach.
 
 Interview question:
 {question}
 
 Candidate answer:
-{SAMPLE_ANSWER}
+{answer}
 
 Return JSON only, with exactly these keys:
 - "strength": one specific strength in the answer
@@ -75,32 +72,24 @@ def generate_text(client: genai.Client, prompt: str) -> str:
 
 
 def main() -> None:
-    load_api_key()
-    client = genai.Client()
+    client = genai.Client(api_key=load_api_key())
 
     question_text = generate_text(client, QUESTION_PROMPT)
     try:
         question = parse_json(question_text)["question"]
     except (json.JSONDecodeError, KeyError, TypeError) as exc:
-        print("Could not parse the generated interview question.", file=sys.stderr)
-        print(f"Parse error: {exc}", file=sys.stderr)
-        print("Raw response:", file=sys.stderr)
-        print(question_text)
-        sys.exit(1)
+        raise ValueError("Could not parse the generated interview question.") from exc
 
     print(f"Question: {question}")
 
-    feedback_text = generate_text(client, build_feedback_prompt(question))
+    feedback_text = generate_text(client, build_feedback_prompt(question, SAMPLE_ANSWER))
     try:
         feedback = parse_json(feedback_text)
         print(f"Strength: {feedback['strength']}")
         print(f"Improvement: {feedback['improvement']}")
         print(f"Retry challenge: {feedback['retry_challenge']}")
     except (json.JSONDecodeError, KeyError, TypeError) as exc:
-        print("Could not parse structured feedback from the model.", file=sys.stderr)
-        print(f"Parse error: {exc}", file=sys.stderr)
-        print("Raw response:", file=sys.stderr)
-        print(feedback_text)
+        raise ValueError("Could not parse structured feedback from the model.") from exc
 
 
 if __name__ == "__main__":
