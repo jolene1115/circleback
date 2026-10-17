@@ -1,15 +1,37 @@
-"""Save / fetch practice attempts (TODO). Use services/db.py; schema in project_plan.md section 8."""
-
-from fastapi import APIRouter
+"""Practice session creation and paginated history."""
+from fastapi import APIRouter, Query
+from backend.models import CreateSessionRequest, SessionResponse, SaveAttemptRequest, AttemptResponse, InterviewFeedbackResponse, Feedback
+from backend.services import db
+from backend.services.metrics import compute_metrics
 
 router = APIRouter(prefix="/sessions")
 
 
-@router.get("")
-async def list_sessions():
-    return []
+@router.post("", response_model=SessionResponse)
+def create_session(body: CreateSessionRequest):
+    return db.create_session(body.userId, body.mode, body.setup)
 
 
-@router.post("")
-async def save_session():
-    return {}
+@router.get("", response_model=list[SessionResponse])
+def list_sessions(userId: str = Query(min_length=1), limit: int = Query(20, ge=1, le=100), offset: int = Query(0, ge=0)):
+    return db.list_sessions(userId, limit, offset)
+
+
+@router.get("/{session_id}", response_model=SessionResponse)
+def get_session(session_id: str):
+    return db.get_session(session_id)
+
+
+@router.post("/{session_id}/attempts", response_model=AttemptResponse)
+def save_attempt(session_id: str, body: SaveAttemptRequest):
+    session = db.get_session(session_id)
+    expected = InterviewFeedbackResponse if session['mode'] == 'interview' else Feedback
+    if not isinstance(body.feedback, expected):
+        raise db.InvalidDataError('Feedback must match the session mode')
+    metrics = compute_metrics(body.transcript, body.metrics.durationSec)
+    return db.save_attempt(session_id, body.question, body.transcript, metrics.model_dump(), body.feedback.model_dump())
+
+
+@router.get("/{session_id}/attempts", response_model=list[AttemptResponse])
+def list_attempts(session_id: str, limit: int = Query(20, ge=1, le=100), offset: int = Query(0, ge=0)):
+    return db.list_attempts(session_id, limit, offset)
