@@ -1,5 +1,6 @@
-"""Minimal Gemini smoke test: generate a question, then grade a sample answer."""
+"""Generate interview feedback from transcription JSON or an explicit sample test."""
 
+import argparse
 import json
 import os
 from pathlib import Path
@@ -71,26 +72,58 @@ def generate_text(client: genai.Client, prompt: str) -> str:
     return response.text or ""
 
 
-def main() -> None:
-    load_api_key()
-    client = genai.Client()
+def feedback_from_transcription(
+    client: genai.Client, question: str, transcription: dict
+) -> dict:
+    """Evaluate the transcript field returned by Node's /api/transcribe."""
+    if not isinstance(question, str) or not question.strip():
+        raise ValueError("An interview question is required.")
+    if not isinstance(transcription, dict):
+        raise ValueError("Transcription must be a JSON object.")
+    transcript = transcription.get("transcript")
+    if not isinstance(transcript, str) or not transcript.strip():
+        raise ValueError("Transcription must contain a non-empty transcript string.")
 
-    question_text = generate_text(client, QUESTION_PROMPT)
-    try:
-        question = parse_json(question_text)["question"]
-    except (json.JSONDecodeError, KeyError, TypeError) as exc:
-        raise ValueError("Could not parse the generated interview question.") from exc
-
-    print(f"Question: {question}")
-
-    feedback_text = generate_text(client, build_feedback_prompt(question, SAMPLE_ANSWER))
+    feedback_text = generate_text(client, build_feedback_prompt(question, transcript))
     try:
         feedback = parse_json(feedback_text)
-        print(f"Strength: {feedback['strength']}")
-        print(f"Improvement: {feedback['improvement']}")
-        print(f"Retry challenge: {feedback['retry_challenge']}")
-    except (json.JSONDecodeError, KeyError, TypeError) as exc:
+        fields = ("strength", "improvement", "retry_challenge")
+        if not isinstance(feedback, dict) or any(
+            not isinstance(feedback.get(field), str) or not feedback[field].strip()
+            for field in fields
+        ):
+            raise ValueError("Feedback fields must be non-empty strings.")
+        return feedback
+    except (json.JSONDecodeError, TypeError, ValueError) as exc:
         raise ValueError("Could not parse structured feedback from the model.") from exc
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--question", help="The question the user actually answered")
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument("--transcription-file", type=Path, help="JSON saved from /api/transcribe")
+    source.add_argument("--sample", action="store_true", help="Run the original sample smoke test")
+    args = parser.parse_args()
+
+    if args.transcription_file:
+        if not args.question or not args.question.strip():
+            parser.error("--question is required with --transcription-file")
+        transcription = json.loads(args.transcription_file.read_text(encoding="utf-8"))
+    else:
+        transcription = {"transcript": SAMPLE_ANSWER}
+
+    client = genai.Client(api_key=load_api_key())
+    question = args.question
+    if not question:
+        question_text = generate_text(client, QUESTION_PROMPT)
+        try:
+            question = parse_json(question_text)["question"]
+        except (json.JSONDecodeError, KeyError, TypeError) as exc:
+            raise ValueError("Could not parse the generated interview question.") from exc
+
+    feedback = feedback_from_transcription(client, question, transcription)
+    print(json.dumps({"question": question, "feedback": feedback}, indent=2))
 
 
 if __name__ == "__main__":
