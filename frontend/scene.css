@@ -1,0 +1,81 @@
+/* One uninterrupted canvas under both the welcome and the choice scene. */
+.moon-landing .sidebar,.moon-exploring .sidebar{position:relative;z-index:3;border:0}
+.moon-workspace .workspace-edition{display:none}
+.moon-landing .content,.moon-exploring .content{position:static}
+.moon-landing .workspace-intro,.moon-exploring .workspace-intro{position:static;height:calc(100dvh - 180px);min-height:430px;overflow:visible;opacity:1;border:0}
+.moon-landing .workspace-intro .moon-stage,.moon-exploring .workspace-intro .moon-stage{position:fixed;inset:0;width:100vw;height:100dvh;mask-image:none;pointer-events:none;z-index:0}
+.moon-landing .workspace-intro .moon-canvas,.moon-exploring .workspace-intro .moon-canvas{opacity:1}
+.moon-landing .workspace-title{align-self:flex-end;margin-bottom:35px;z-index:2}
+.moon-landing .workspace-title h1{margin-bottom:24px}
+.moon-landing .sidebar nav{display:none}
+.moon-landing .workspace-title h1{margin-bottom:12px}
+.moon-landing .workspace-title .landing-description{max-width:220px;margin:0 0 24px}
+.landing-description strong{display:block;font-size:18px;font-weight:450;line-height:1.45;color:#e3e8ee}
+.landing-description span{display:block;font-size:13px;line-height:1.65;color:#b1bac5;margin-top:9px;max-width:270px}
+@media(max-height:650px){.moon-landing .workspace-intro{min-height:600px}}
+.moon-landing .workspace-intro .moon-stage{pointer-events:auto}
+.moon-exploring .workspace-intro{height:0;min-height:0}
+.moon-exploring .workspace-modes{margin:0 auto;max-width:950px;gap:60px;min-height:calc(100dvh - 180px);align-items:center}
+.moon-exploring .workspace-mode,.moon-exploring .workspace-mode+.workspace-mode{height:470px;padding:35px 12px 300px;border-radius:0}
+.moon-exploring .choice-hand{height:340px;width:100%;left:0;bottom:-20px;mask-image:linear-gradient(black 70%,transparent)}
+.choice-soon{display:block;font-size:11px;color:#b9b7b2;margin-top:12px}
+.moon-setup .moon-stage{background:transparent;mask-image:none}
+.moon-setup .moon-coach{padding-top:8px}
+.moon-setup .workspace-voice{text-align:left}
+.moon-setup .workspace-voice .browser-voice-field{margin-top:0}
+.moon-setup .workspace-voice .field-label{font-weight:500;color:var(--muted)}
+.moon-setup .page-head p:empty,.moon-setup .step{display:none}
+.moon-setup .page-head{margin-bottom:28px}
+.moon-setup .topic small{display:none}
+.moon-setup .topic{min-height:54px}
+.moon-setup .form-section{margin-bottom:24px}
+.moon-setup #voicePreviewStatus:empty{display:none}
+.moon-setup .moon-small{aspect-ratio:1.2/1}
+.moon-setup .content{max-width:1100px;padding-top:48px}
+.setup-heading{display:flex;align-items:center;gap:16px;margin-bottom:40px}
+.setup-heading .icon-button{border:0;color:var(--muted)}
+.moon-setup .setup-layout{grid-template-columns:minmax(0,1fr) 330px;gap:64px;align-items:start}
+.moon-setup fieldset{padding:0;border:0;margin:0 0 30px;min-width:0}
+.moon-setup legend{font-size:12px;color:var(--muted);margin-bottom:12px}
+.moon-setup .topic-grid{gap:8px}
+.moon-setup .topic{font-size:12px;padding:12px 10px;min-height:56px;border-color:transparent;border-bottom-color:var(--line);border-radius:0}
+.moon-setup .topic.selected{border-color:transparent;border-bottom-color:var(--ink);background:#ffffff06}
+.moon-setup #custom{margin-top:14px;background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0;padding-left:0}
+.moon-setup .focus-options{gap:10px 0}
+.moon-setup .focus-option{font-size:11px}
+.setup-details{border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.setup-details>summary{display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none;font-size:12px;color:var(--muted);padding:16px 0}
+.setup-details>summary::-webkit-details-marker{display:none}
+.setup-details>summary svg{width:16px;height:16px}
+.setup-details>summary svg:last-child{margin-left:auto;transition:transform .2s}
+.setup-details[open]>summary svg:last-child{transform:rotate(180deg)}
+.setup-details-body{padding:10px 0 0}
+.setup-details-body>input,.setup-details-body>textarea{margin-bottom:20px}
+.moon-setup .setup-footer{border:0;padding-top:0;margin-top:26px}
+.moon-setup .moon-small{aspect-ratio:1.8/1}
+.moon-setup .moon-coach{padding:0;position:static}
+.moon-setup .workspace-voice{max-width:270px;margin:-6px auto 0}
+.moon-setup .browser-voice-picker{gap:6px;border-bottom:1px solid var(--line)}
+.moon-setup .browser-voice-picker select{font-size:13px;background:transparent;border:0;border-radius:0;padding:10px 4px;min-height:42px}
+.moon-setup .browser-voice-picker .icon-button{border:0;flex:0 0 38px}
+.moon-setup .moon-coach{padding-top:46px}
+@media(max-width:760px){
+ .moon-setup .content{padding-top:26px}
+ .moon-setup .setup-heading{margin-bottom:24px}
+ .moon-setup .setup-layout{gap:28px}
+ .moon-setup .workspace-voice{max-width:none;margin:0}
+ .moon-setup .setup-footer{flex-direction:row;align-items:center}
+ .moon-setup .setup-footer .main-button{width:auto;min-width:125px}
+ .moon-setup .setup-layout{display:flex;flex-direction:column;gap:24px}
+ .moon-setup .moon-coach{display:block;position:static;order:-1;width:100%;padding:0}
+ .moon-setup .moon-coach .moon-stage{display:none}
+ .moon-setup #setupForm{width:100%}
+ .moon-setup .topic-grid{grid-template-columns:1fr 1fr}
+ .moon-landing .workspace-intro{height:calc(100dvh - 130px);min-height:420px}
+ .moon-landing .workspace-title{margin-bottom:15px}
+ .moon-exploring .workspace-modes{gap:10px;min-height:calc(100dvh - 140px)}
+ .moon-exploring .workspace-mode,.moon-exploring .workspace-mode+.workspace-mode{height:360px;padding:20px 0 220px}
+ .moon-exploring .workspace-mode>div{gap:4px;min-height:54px}
+ .moon-exploring .workspace-mode h2{font-size:20px}
+ .moon-exploring .choice-hand{width:100%;left:0;height:230px;bottom:0}
+}

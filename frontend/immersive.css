@@ -1,0 +1,62 @@
+@font-face{font-family:Inter;src:url('assets/InterVariable.woff2') format('woff2');font-weight:100 900;font-display:swap}
+.moon-review-audio{margin-top:32px;padding-top:24px;border-top:1px solid var(--line)}.moon-review-audio p{margin:16px 0 10px}.moon-review-audio audio{width:100%}
+body[data-theme=moon]{font-family:Inter,'Segoe UI',sans-serif;letter-spacing:0}
+body.moon-immersive{overflow:hidden;background:#10151d}
+body.moon-immersive .content{padding:0;max-width:none}
+body.moon-immersive .room-layout .moon-stage{position:fixed;inset:0;width:100%;height:100dvh;aspect-ratio:auto;z-index:0}
+body.moon-immersive .moon-caption,
+body.moon-immersive .page-head>div:not(.moon-session-controls),
+body.moon-immersive .room-layout .section-heading,
+body.moon-immersive .journey,
+body.moon-immersive #answerForm>.field-label,
+body.moon-immersive #sampleAnswer,
+body.moon-immersive #answerForm>.field-note,
+body.moon-immersive .room-layout section>details,
+body.moon-immersive .speaker,
+body.moon-immersive #audioPlayback,
+body.moon-immersive #mic{display:none}
+body.moon-immersive .page-head{position:fixed;top:24px;right:28px;z-index:3;margin:0}
+body.moon-immersive .page-head h1{display:none}
+body.moon-immersive .moon-session-controls{width:auto;gap:12px}
+body.moon-immersive #moonLeave,.moon-menu summary{display:flex;align-items:center;justify-content:center;width:40px;height:40px;padding:8px;border:0;background:transparent;color:#aab9c7;border-radius:4px;cursor:pointer}
+body.moon-immersive #moonLeave:hover,.moon-menu summary:hover{background:#ffffff0a;color:#fff}
+.moon-menu{position:relative}
+.moon-menu summary{list-style:none}
+.moon-menu summary::-webkit-details-marker{display:none}
+.moon-menu-items{position:absolute;right:0;top:48px;width:240px;padding:8px;background:#20262e;border:1px solid #46515d;border-radius:6px;box-shadow:0 10px 28px #0005;display:flex;flex-direction:column;gap:2px}
+body.moon-immersive .moon-menu-items button,body.moon-immersive .moon-menu-items label{display:flex;align-items:center;gap:10px;width:100%;height:auto;min-height:44px;padding:10px 12px;margin:0;border:0;background:none;color:#e0e7ee;font:400 13px Inter,sans-serif;text-align:left;white-space:normal;border-radius:3px}
+body.moon-immersive .moon-menu-items button:hover{background:#ffffff0a}
+body.moon-immersive .question-stage{position:fixed;left:50%;top:57%;transform:translateX(-50%);width:min(84%,820px);margin:0;padding:0;border:0;z-index:2;text-align:center}
+body.moon-immersive .question-stage h2{width:100%;max-width:none;font-size:28px;line-height:1.45;font-weight:400;max-height:18dvh;overflow:auto;margin:0 auto;text-wrap:balance;text-shadow:0 2px 15px #10151d}
+body.moon-immersive #answerForm{position:fixed;left:50%;top:77%;transform:translateX(-50%);width:min(84%,820px);margin:0;z-index:2}
+body.moon-immersive .answer-box{background:transparent;border:0;box-shadow:none}
+.moon #answer[hidden],.moon #sampleAnswer[hidden]{display:none!important}
+.moon #liveAnswer{height:70px;overflow:auto;padding:0 8px;color:#b6c9da;text-align:center;font-size:22px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+body.moon-immersive .answer-controls{display:flex;border:0;background:transparent;justify-content:center;gap:0;padding:18px 0 0}
+body.moon-immersive .answer-controls button[type=submit]{position:relative;display:flex;align-items:center;justify-content:center;width:48px;min-width:48px;height:48px;padding:0;margin:0;border:1px solid #81909d;border-radius:50%;background:#e2eaf0;color:#18212a;box-shadow:none}
+body.moon-immersive .answer-controls button[type=submit]:hover:not(:disabled){background:#f4f7f9}
+body.moon-immersive .answer-controls button[type=submit]:disabled{opacity:.5;cursor:default}
+body.moon-immersive .answer-controls button.is-recording svg{width:18px;height:18px;fill:currentColor}
+body.moon-immersive .answer-controls button[data-symbol="loader-circle"] svg{animation:recording-process-spin 1s linear infinite;transform-origin:center}
+@keyframes recording-process-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){body.moon-immersive .answer-controls button[data-symbol="loader-circle"] svg{animation:none}}
+.moon #liveAnswer.is-placeholder{color:#97a2ae;font-size:18px}
+body.moon-immersive #micStatus{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+body.moon-immersive #answerError{text-align:center;margin:8px 0 0;font-size:12px}
+body.moon-immersive button:focus-visible,.moon-menu summary:focus-visible{outline:2px solid #dce8f0;outline-offset:4px}
+.moon-word{display:inline-block;white-space:pre-wrap;opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s}
+.moon-word.is-spoken{opacity:1;transform:translateY(0)}
+@media(max-width:600px){body.moon-immersive .question-stage{top:53%;width:88%}body.moon-immersive .question-stage h2{font-size:21px;max-height:22dvh}body.moon-immersive #answerForm{top:77%;width:88%}.moon #liveAnswer{height:60px;font-size:18px}body.moon-immersive .answer-controls{padding-top:12px}body.moon-immersive .page-head{top:12px;right:12px}}
+@media(max-height:650px){body.moon-immersive .question-stage{top:49%}body.moon-immersive .question-stage h2{font-size:20px;max-height:21dvh}body.moon-immersive #answerForm{top:73%}.moon #liveAnswer{height:42px;font-size:17px}body.moon-immersive .answer-controls{padding-top:8px}body.moon-immersive .answer-controls button[type=submit]{height:40px}}
+@media(prefers-reduced-motion:reduce){.moon-word{transition:none;transform:none}}
+
+/* Keep question, transcript and recording control in one stable conversation block. */
+body.moon-immersive .moon-dialogue{position:fixed;z-index:2;left:50%;top:60%;transform:translateX(-50%);width:min(86%,760px);display:flex;flex-direction:column;gap:24px}
+body.moon-immersive .moon-dialogue .question-stage{position:static;transform:none;width:100%;height:clamp(70px,12dvh,116px);display:flex;align-items:center;justify-content:center}
+body.moon-immersive .moon-dialogue .question-stage h2{font-size:26px;font-weight:500;color:#edf1f4;line-height:1.45;max-height:100%;margin:0}
+body.moon-immersive .moon-dialogue #answerForm{position:static;transform:none;width:100%;margin:0}
+body.moon-immersive .moon-dialogue #liveAnswer{height:60px;font-size:20px;font-weight:400;color:#b6c9da;line-height:1.5;align-content:center;padding:0 12px}
+body.moon-immersive .moon-dialogue #liveAnswer.is-placeholder{font-size:17px}
+body.moon-immersive .moon-dialogue .answer-controls{padding-top:20px}
+@media(max-width:600px){body.moon-immersive .moon-dialogue{top:55%;width:88%;gap:18px}body.moon-immersive .moon-dialogue .question-stage{height:clamp(90px,16dvh,132px)}body.moon-immersive .moon-dialogue .question-stage h2{font-size:21px}body.moon-immersive .moon-dialogue #liveAnswer{font-size:18px;height:54px}body.moon-immersive .moon-dialogue .answer-controls{padding-top:16px}}
+@media(max-height:650px){body.moon-immersive .moon-dialogue{top:52%;gap:12px}body.moon-immersive .moon-dialogue .question-stage{height:72px}body.moon-immersive .moon-dialogue .question-stage h2{font-size:20px}body.moon-immersive .moon-dialogue #liveAnswer{height:48px;font-size:17px}body.moon-immersive .moon-dialogue .answer-controls{padding-top:12px}body.moon-immersive .moon-dialogue .answer-controls button[type=submit]{width:44px;min-width:44px;height:44px}}

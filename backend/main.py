@@ -9,6 +9,8 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 
 from backend.routers import interview, sessions, speaking, transcribe
 
@@ -43,3 +45,7 @@ def health():
 
 for module in (transcribe, interview, speaking, sessions):
     app.include_router(module.router, prefix="/api")
+
+frontend = Path(__file__).resolve().parent.parent / "frontend"
+if frontend.is_dir():
+    app.mount("/", StaticFiles(directory=frontend, html=True), name="frontend")

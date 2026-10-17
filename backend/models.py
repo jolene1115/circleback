@@ -2,7 +2,7 @@
 
 from typing import Annotated, Optional
 
-from pydantic import BaseModel, StringConstraints
+from pydantic import BaseModel, StringConstraints, Field
 
 NonEmptyText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 
@@ -57,11 +57,20 @@ class QuestionResponse(BaseModel):
     question: NonEmptyText
 
 
+class InterviewContext(BaseModel):
+    topic: str = Field(default="Software internship", max_length=160)
+    context: str = Field(default="", max_length=3000)
+    focus: list[str] = Field(default_factory=list, max_length=20)
+    tone: str = Field(default="Supportive", max_length=80)
+    history: list[dict[str, str]] = Field(default_factory=list, max_length=8)
+
+
 # POST /api/interview/feedback
 class InterviewFeedbackRequest(BaseModel):
     question: NonEmptyText
     transcript: NonEmptyText  # the "transcript" field from /api/transcribe
     metrics: Optional[Metrics] = None  # optional: pass /api/transcribe's metrics through
+    interview: Optional[InterviewContext] = None
 
 
 class InterviewFeedbackResponse(BaseModel):
