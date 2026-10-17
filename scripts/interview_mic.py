@@ -64,20 +64,22 @@ def practice(question: str, args) -> bool:
     print_transcript(1, body)
 
     say("💬 Getting feedback...")
-    fb = post("/interview/feedback", json={"question": question, "transcript": body["transcript"], "metrics": body["metrics"]})
+    fb = post("/interview/feedback", json={"question": question, "transcript": body["transcript"], "metrics": body["metrics"], "sessionId": args.session_id})
     if fb:
         say(
             f"\n✅ Strength:    {fb['strength']}",
             f"🔧 Improve:     {fb['improvement']}",
             f"🔁 Try next:    {fb['retry_challenge']}",
         )
-    return True
+    return bool(fb)
 
 
 def main():
     parser = argparse.ArgumentParser(description="Interview practice: question, answer, transcript, feedback")
     parser.add_argument("file", nargs="?", help="audio file to use as your answer (runs once)")
     parser.add_argument("--mic", action="store_true", help="answer with the Mac's default microphone")
+    parser.add_argument("--user-id", help="reuse an existing user for history")
+    parser.add_argument("--name", default="Practice user", help="name when creating a user")
     parser.add_argument("--question", help="use this question instead of generating one (saves Gemini quota)")
     parser.add_argument("--silence", type=int, default=2500, help="pause (ms) that ends your answer")
     parser.add_argument("--threshold", type=float, default=0.02, help="loudness (0-1) that counts as speech")
@@ -85,6 +87,17 @@ def main():
     if not args.mic and not args.file:
         parser.error("use --mic or give an audio file")
 
+    user_id = args.user_id
+    if not user_id:
+        user = post("/users", json={"name": args.name})
+        if not user:
+            return
+        user_id = user["id"]
+    session = post("/sessions", json={"userId": user_id, "mode": "interview", "setup": {}})
+    if not session:
+        return
+    args.session_id = session["id"]
+    say(f"History user ID: {user_id}", f"Session: {args.session_id}")
     question = args.question
     try:
         while True:

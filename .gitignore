@@ -9,6 +9,8 @@ __pycache__/
 
 # database (unless intentional seed data)
 *.db
+*.db-wal
+*.db-shm
 
 # frontend
 node_modules/
