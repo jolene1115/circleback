@@ -1,18 +1,22 @@
 """Shared request/response shapes. These follow the API contracts in project_plan.md (section 7)."""
 
-from typing import Annotated, Optional
+from typing import Annotated, Optional, Literal, Any
 
-from pydantic import BaseModel, StringConstraints
+from pydantic import BaseModel, StringConstraints, Field, ConfigDict
 
 NonEmptyText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 
 
+NonNegativeInt = Annotated[int, Field(ge=0)]
+NonNegativeFloat = Annotated[float, Field(ge=0, allow_inf_nan=False)]
+
+
 class Metrics(BaseModel):
-    durationSec: float
-    wordsPerMinute: int
-    fillerCount: int
-    fillerWords: dict[str, int]
-    longPauses: Optional[int] = None  # only if word timestamps are available
+    durationSec: NonNegativeFloat
+    wordsPerMinute: NonNegativeInt
+    fillerCount: NonNegativeInt
+    fillerWords: dict[str, NonNegativeInt]
+    longPauses: Optional[NonNegativeInt] = None  # only if word timestamps are available
 
 
 class StarCheck(BaseModel):
@@ -52,6 +56,7 @@ class QuestionResponse(BaseModel):
 
 # POST /api/interview/feedback
 class InterviewFeedbackRequest(BaseModel):
+    sessionId: Optional[NonEmptyText] = None
     question: NonEmptyText
     transcript: NonEmptyText  # the "transcript" field from /api/transcribe
     metrics: Optional[Metrics] = None  # optional: pass /api/transcribe's metrics through
@@ -68,6 +73,7 @@ class InterviewFeedbackResponse(BaseModel):
 
 # POST /api/speaking/feedback
 class SpeakingFeedbackRequest(BaseModel):
+    sessionId: Optional[NonEmptyText] = None  # when set, the attempt is saved to this session
     context: NonEmptyText  # topic, audience, occasion, e.g. "5-min class presentation on recycling for classmates"
     points: list[NonEmptyText] = []  # key points they intend to make
     transcript: NonEmptyText  # the "transcript" field from /api/transcribe
@@ -92,3 +98,30 @@ class SpeakingFeedbackResponse(BaseModel):
     deliveryTip: Optional[str] = None  # only when pace, filler words or timing were off
     nextTry: NonEmptyText  # what to focus on in the next attempt
     timeCheck: Optional[TimeCheck] = None
+
+
+class CreateSessionRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    userId: NonEmptyText
+    mode: Literal["interview", "speaking"]
+    setup: dict[str, Any] = Field(default_factory=dict)
+
+
+class SessionResponse(CreateSessionRequest):
+    id: str
+    createdAt: str
+
+
+class SaveAttemptRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    question: Optional[NonEmptyText] = None
+    transcript: NonEmptyText
+    metrics: Metrics
+    feedback: InterviewFeedbackResponse | SpeakingFeedbackResponse
+
+
+class AttemptResponse(SaveAttemptRequest):
+    id: str
+    sessionId: str
+    durationSec: NonNegativeFloat
+    createdAt: str

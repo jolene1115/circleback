@@ -9,6 +9,8 @@ __pycache__/
 
 # database (unless intentional seed data)
 *.db
+*.db-wal
+*.db-shm
 
 # personal test recordings
 samples/*
@@ -16,3 +18,7 @@ samples/*
 
 .DS_Store
 .claude/
+
+# frontend
+node_modules/
+.next/

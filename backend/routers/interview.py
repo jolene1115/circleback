@@ -5,6 +5,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from google import genai
 from google.genai import errors
 
+from backend.services import db
+from backend.services.metrics import compute_metrics
 from backend.models import InterviewFeedbackRequest, InterviewFeedbackResponse, QuestionResponse
 from backend.test_llm import (
     QUESTION_PROMPT,
@@ -47,13 +49,21 @@ def question(client=Depends(get_client)):
 
 @router.post("/feedback", response_model=InterviewFeedbackResponse)
 def feedback(request: InterviewFeedbackRequest, client=Depends(get_client)):
+    if request.sessionId:
+        db.get_session(request.sessionId, "interview")
     try:
         transcription = {"transcript": request.transcript}
         if request.metrics:
             transcription["metrics"] = request.metrics.model_dump()  # lets feedback cite real pace/filler numbers
         result = feedback_from_transcription(client, request.question, transcription)
-        return InterviewFeedbackResponse.model_validate(result)
+        validated = InterviewFeedbackResponse.model_validate(result)
     except errors.APIError as exc:
         raise model_error(exc) from exc
     except (ValueError, TypeError) as exc:
         raise HTTPException(502, "Gemini returned invalid feedback.") from exc
+
+    if request.sessionId:
+        metrics = compute_metrics(request.transcript, request.metrics.durationSec if request.metrics else 0)
+        db.save_attempt(request.sessionId, request.question, request.transcript,
+                        metrics.model_dump(), validated.model_dump(), mode="interview")
+    return validated
