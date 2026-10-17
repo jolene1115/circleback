@@ -43,7 +43,14 @@ Open <http://localhost:8000/docs> to try every endpoint in the browser.
   "transcript": "We disagreed about the tech stack. I organized a meeting and helped us choose one. We finished on time."
 }
 ```
-It returns `strength`, `improvement` and `retry_challenge` strings.
+It returns:
+- `strength`, `improvement`: each quotes the words from the answer it refers to
+- `example_rewrite`: one of their sentences, rewritten the way a strong candidate would say it
+- `retry_challenge`: what to do on the next attempt
+- `star_check`: `{situation, task, action, result}` as true/false
+- `delivery_tip`: only when pace or filler words were off (otherwise `null`). Pass `metrics` to get this
+
+The prompt is in `build_feedback_prompt` in `backend/test_llm.py`. Busy-server errors (503) are retried automatically.
 
 All errors come back as `{ "error": "..." }`: empty or invalid input returns 422, invalid Gemini responses return 502, and rate limits return 429. Local frontend origins on ports 5173 and 3000 are allowed (CORS). Nothing saves attempts yet.
 

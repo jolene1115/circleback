@@ -3,10 +3,14 @@
 import argparse
 import json
 import os
+import time
 from pathlib import Path
+from typing import Optional
 
 from dotenv import load_dotenv
 from google import genai
+from google.genai import errors, types
+from pydantic import BaseModel
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 ENV_PATH = ROOT_DIR / ".env"
@@ -35,19 +39,82 @@ def load_api_key() -> str:
     return api_key
 
 
-def build_feedback_prompt(question: str, answer: str) -> str:
-    return f"""You are a beginner-friendly interview coach.
+class StarCheck(BaseModel):
+    situation: bool
+    task: bool
+    action: bool
+    result: bool
+
+
+class FeedbackOut(BaseModel):
+    """Shape Gemini must return (enforced with response_schema)."""
+
+    strength: str
+    improvement: str
+    example_rewrite: str
+    retry_challenge: str
+    star_check: StarCheck
+    delivery_tip: Optional[str] = None
+
+
+# Speaking-pace and filler guidelines used to decide whether delivery is worth mentioning.
+TARGET_WPM = (130, 160)
+MAX_FILLERS_PER_MIN = 3
+
+
+def describe_delivery(metrics: Optional[dict]) -> str:
+    """Turn /api/transcribe's metrics into plain facts for the prompt (numbers come from code, not the LLM)."""
+    if not metrics or not metrics.get("durationSec"):
+        return "Not available."
+    minutes = metrics["durationSec"] / 60
+    fillers = metrics.get("fillerWords") or {}
+    filler_list = ", ".join(f'"{w}" x{n}' for w, n in fillers.items()) or "none"
+    per_min = metrics.get("fillerCount", 0) / minutes if minutes else 0
+    wpm = metrics.get("wordsPerMinute", 0)
+    pace = "too fast" if wpm > TARGET_WPM[1] else "too slow" if wpm < TARGET_WPM[0] else "good"
+    return (
+        f"- Length: {metrics['durationSec']:.0f} seconds\n"
+        f"- Pace: {wpm} words/min ({pace}; target {TARGET_WPM[0]}-{TARGET_WPM[1]})\n"
+        f"- Filler words: {metrics.get('fillerCount', 0)} total ({filler_list}), "
+        f"{per_min:.1f} per minute ({'too many' if per_min > MAX_FILLERS_PER_MIN else 'fine'}; "
+        f"aim for {MAX_FILLERS_PER_MIN} or fewer)"
+    )
+
+
+def build_feedback_prompt(question: str, answer: str, metrics: Optional[dict] = None) -> str:
+    return f"""You are an encouraging but specific interview coach for a beginner software internship candidate.
+They answered out loud; the answer below is a verbatim transcript, so filler words are expected.
 
 Interview question:
 {question}
 
-Candidate answer:
-{answer}
+Candidate answer (verbatim transcript):
+"{answer}"
 
-Return JSON only, with exactly these keys:
-- "strength": one specific strength in the answer
-- "improvement": one specific thing to improve
-- "retry_challenge": one follow-up question the candidate should practice next
+Delivery (measured by code, trust these numbers):
+{describe_delivery(metrics)}
+
+How to give feedback:
+- Be specific. Every point must quote the exact words from the answer it refers to, in quotes.
+- Judge content first: did they answer the question asked? Did they give concrete details
+  (what THEY did, numbers, tools, outcomes) or stay general?
+- Check STAR: Situation (context), Task (their responsibility), Action (steps they personally took),
+  Result (outcome, ideally measurable). Mark each true only if it is clearly present.
+- strength: one real strength, quoting the words that show it.
+- improvement: the single change that would most improve this answer. Name what is missing
+  and why it matters to an interviewer. Don't list several things.
+- example_rewrite: rewrite ONE sentence from their answer the way a strong candidate would say it.
+  Keep it true to their story; use a placeholder like [number] instead of inventing facts.
+- retry_challenge: a short instruction for their next attempt at this same question.
+- delivery_tip: only if pace or filler words were flagged above, one tip naming the actual
+  number (for example their most-used filler). Otherwise null.
+- Tone: warm and direct, like a mentor. Never comment on accent or speaking style.
+
+Example of the level of specificity wanted (different answer):
+  improvement: "You said \\"we fixed the bug\\" but never said what YOU did. Interviewers want
+  your personal actions, so name the step you took."
+  example_rewrite: "I traced the crash to a null user ID in the login API and added a check,
+  which cut error reports by [number]%."
 """
 
 
@@ -64,18 +131,43 @@ def parse_json(raw_text: str) -> dict:
     return json.loads(text)
 
 
+def call_gemini(client: genai.Client, prompt: str, config=None, attempts: int = 3):
+    """generate_content, retrying 503 "high demand" errors (usually brief) with a short backoff."""
+    for attempt in range(1, attempts + 1):
+        try:
+            return client.models.generate_content(
+                model=os.getenv("GEMINI_LLM_MODEL", MODEL),  # override in .env (free quotas are per model)
+                contents=prompt,
+                config=config,
+            )
+        except errors.APIError as exc:
+            if exc.code != 503 or attempt == attempts:
+                raise
+            time.sleep(2 * attempt)
+
+
 def generate_text(client: genai.Client, prompt: str) -> str:
-    response = client.models.generate_content(
-        model=os.getenv("GEMINI_LLM_MODEL", MODEL),  # override in .env (free quotas are per model)
-        contents=prompt,
+    return call_gemini(client, prompt).text or ""
+
+
+def generate_feedback(client: genai.Client, prompt: str) -> FeedbackOut:
+    """Like generate_text, but Gemini must return JSON matching FeedbackOut."""
+    response = call_gemini(
+        client,
+        prompt,
+        types.GenerateContentConfig(
+            response_mime_type="application/json",
+            response_schema=FeedbackOut,
+            temperature=0.3,  # low = more consistent feedback between attempts
+        ),
     )
-    return response.text or ""
+    return FeedbackOut.model_validate_json(response.text or "")
 
 
 def feedback_from_transcription(
     client: genai.Client, question: str, transcription: dict
 ) -> dict:
-    """Evaluate the transcript field returned by Node's /api/transcribe."""
+    """Evaluate the JSON returned by /api/transcribe: uses its "transcript" and, if present, "metrics"."""
     if not isinstance(question, str) or not question.strip():
         raise ValueError("An interview question is required.")
     if not isinstance(transcription, dict):
@@ -84,17 +176,17 @@ def feedback_from_transcription(
     if not isinstance(transcript, str) or not transcript.strip():
         raise ValueError("Transcription must contain a non-empty transcript string.")
 
-    feedback_text = generate_text(client, build_feedback_prompt(question, transcript))
+    prompt = build_feedback_prompt(question, transcript, transcription.get("metrics"))
     try:
-        feedback = parse_json(feedback_text)
-        fields = ("strength", "improvement", "retry_challenge")
+        feedback = generate_feedback(client, prompt).model_dump()
+        fields = ("strength", "improvement", "example_rewrite", "retry_challenge")
         if not isinstance(feedback, dict) or any(
             not isinstance(feedback.get(field), str) or not feedback[field].strip()
             for field in fields
         ):
             raise ValueError("Feedback fields must be non-empty strings.")
         return feedback
-    except (json.JSONDecodeError, TypeError, ValueError) as exc:
+    except (TypeError, ValueError) as exc:  # pydantic's ValidationError is a ValueError
         raise ValueError("Could not parse structured feedback from the model.") from exc
 
 

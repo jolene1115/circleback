@@ -67,7 +67,10 @@ class InterviewFeedbackRequest(BaseModel):
 class InterviewFeedbackResponse(BaseModel):
     strength: NonEmptyText
     improvement: NonEmptyText
+    example_rewrite: NonEmptyText  # one of their sentences, rewritten the way a strong candidate would say it
     retry_challenge: NonEmptyText
+    star_check: StarCheck
+    delivery_tip: Optional[str] = None  # only when pace or filler words were off
 
 
 # POST /api/speaking/feedback

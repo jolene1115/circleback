@@ -29,6 +29,8 @@ def get_client():
 def model_error(exc: errors.APIError) -> HTTPException:
     if exc.code == 429:
         return HTTPException(429, "Gemini rate limit reached. Please try again later.")
+    if exc.code == 503:
+        return HTTPException(503, "Gemini is overloaded right now (high demand). Try again in a minute.")
     return HTTPException(502, "Gemini request failed. Please try again later.")
 
 
@@ -46,7 +48,10 @@ def question(client=Depends(get_client)):
 @router.post("/feedback", response_model=InterviewFeedbackResponse)
 def feedback(request: InterviewFeedbackRequest, client=Depends(get_client)):
     try:
-        result = feedback_from_transcription(client, request.question, {"transcript": request.transcript})
+        transcription = {"transcript": request.transcript}
+        if request.metrics:
+            transcription["metrics"] = request.metrics.model_dump()  # lets feedback cite real pace/filler numbers
+        result = feedback_from_transcription(client, request.question, transcription)
         return InterviewFeedbackResponse.model_validate(result)
     except errors.APIError as exc:
         raise model_error(exc) from exc
