@@ -1,0 +1,18 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# secrets: real keys live in .env (see .env.example)
+.env
+.env*.local
+
+# database (unless intentional seed data)
+*.db
+
+# personal test recordings
+samples/*
+!samples/.gitkeep
+
+.DS_Store
+.claude/
