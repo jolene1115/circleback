@@ -16,8 +16,8 @@ class UIIntegrationTests(unittest.TestCase):
         app.dependency_overrides.clear()
 
     def test_frontend_and_health(self):
-        self.assertEqual(self.client.get('/api/health').json(), {'ok': True})
-        self.assertIn('team-api.js', self.client.get('/').text)
+        self.assertTrue(self.client.get('/api/health').json()['ok'])
+        self.assertIn('type="module"', self.client.get('/').text)
         self.assertEqual(self.client.get('/team-api.js').status_code, 200)
 
     @patch('backend.routers.interview.generate_text', return_value='{"question":"Tell me about your portfolio."}')

@@ -48,7 +48,7 @@ def question(request: InterviewContext | None = None, client=Depends(get_client)
     except errors.APIError as exc:
         raise model_error(exc) from exc
     except (ValueError, TypeError) as exc:
-        raise HTTPException(502, "Gemini returned an invalid question.") from exc
+        raise HTTPException(502, "AI returned an invalid question.") from exc
 
 
 @router.post("/feedback", response_model=InterviewFeedbackResponse)
@@ -62,7 +62,7 @@ def feedback(request: InterviewFeedbackRequest, client=Depends(get_client)):
     except errors.APIError as exc:
         raise model_error(exc) from exc
     except (ValueError, TypeError) as exc:
-        raise HTTPException(502, "Gemini returned invalid feedback.") from exc
+        raise HTTPException(502, "AI returned invalid feedback.") from exc
 
     if request.sessionId:
         metrics = compute_metrics(request.transcript, request.metrics.durationSec if request.metrics else 0)

@@ -1,4 +1,4 @@
-/* Send WAV chunks to the same-origin team API, which transcribes with Gemini. */
+/* Send WAV chunks to the same-origin team API, which transcribes with the configured AI service. */
 function pcmWav(pcm,sampleRate){
  const buffer=new ArrayBuffer(44+pcm.length*2),v=new DataView(buffer);
  const text=(offset,value)=>{for(let i=0;i<value.length;i++)v.setUint8(offset+i,value.charCodeAt(i));};
@@ -29,7 +29,7 @@ async function startTranscript(){
     if(!response.ok)throw new Error('Transcription unavailable');
     const result=await response.json();
     if(state.valid&&input.isConnected&&result.transcript){input.value=(input.value.trim()+' '+result.transcript).trim().slice(0,5000);answer=input.value;const caption=$('#liveAnswer');if(caption){caption.textContent=answer;caption.scrollTop=caption.scrollHeight;}$('#answerError').textContent='';}
-   }catch(e){if(state.valid){state.failed=true;$('#micStatus').textContent='Transcription unavailable';$('#answerError').textContent='Transcription failed. Stop and record again; part of your answer may be missing.';toast('Transcription unavailable. Check the server connection and Gemini quota.');state.valid=false;}}
+   }catch(e){if(state.valid){state.failed=true;$('#micStatus').textContent='Transcription unavailable';$('#answerError').textContent='Transcription failed. Stop and record again; part of your answer may be missing.';toast('Transcription unavailable. Check the server connection and AI service quota.');state.valid=false;}}
    finally{clearTimeout(timeout);state.requests.delete(controller);}
   });
  };
@@ -53,7 +53,7 @@ const transcriptBind=bind,transcriptCleanup=cleanup;
 cleanup=function(){stopTranscript(true);transcriptCleanup();};
 bind=function(){
  transcriptBind();if(theme!=='moon'||view!=='room')return;
- const note=$('#answerForm>.field-note');if(note)note.textContent='Audio is transcribed by Gemini through the team server.';
+ const note=$('#answerForm>.field-note');if(note)note.textContent='Audio is transcribed through the team server.';
  $('#answer').hidden=true;$('#answer').setAttribute('aria-hidden','true');$('#answer').tabIndex=-1;
  const caption=document.createElement('div');caption.id='liveAnswer';caption.setAttribute('role','status');caption.setAttribute('aria-live','polite');caption.setAttribute('aria-label','Your transcribed answer');caption.textContent=$('#answer').value;$('#answer').before(caption);
  const label=$('label[for=answer]');if(label)label.hidden=true;$('#sampleAnswer').hidden=true;

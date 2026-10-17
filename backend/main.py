@@ -19,6 +19,7 @@ from pathlib import Path
 from backend.services.db import init_db, NotFoundError, InvalidDataError
 from backend.routers import interview, sessions, speaking, transcribe
 from backend.routes import users
+from backend.config import GEMINI_API_KEY
 
 @asynccontextmanager
 async def lifespan(app):
@@ -69,7 +70,7 @@ async def validation_error(request: Request, exc: RequestValidationError):
 @app.get("/api/health")
 def health():
     """Checks the Python server is running; does not call Gemini."""
-    return {"ok": True}
+    return {"ok": True, "keyConfigured": bool(GEMINI_API_KEY), "provider": "gemini"}
 
 
 @app.get("/api")
@@ -83,6 +84,6 @@ for module in (transcribe, interview, speaking, sessions):
 
 app.include_router(users.router)
 
-frontend = Path(__file__).resolve().parent.parent / "frontend"
+frontend = Path(__file__).resolve().parent.parent / "frontend" / "dist"
 if frontend.is_dir():
     app.mount("/", StaticFiles(directory=frontend, html=True), name="frontend")

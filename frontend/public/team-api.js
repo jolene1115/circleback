@@ -22,7 +22,9 @@ bind=function(){
  teamBaseBind();
  if(view==='setup'){
   const form=$('#setupForm'),start=form.onsubmit,button=form.querySelector('button[type=submit]');
-  const consent=document.createElement('label');consent.className='team-consent';consent.innerHTML='<input type="checkbox" required> <span>Use Gemini to process my audio and answers.</span>';button.parentElement.before(consent);
+  const service=form.querySelector('.setup-footer .small-label');service.textContent='Checking connection...';button.disabled=true;
+  fetch('/api/health').then(r=>{if(!r.ok)throw Error();return r.json();}).then(data=>{if(!form.isConnected)return;button.disabled=!data.keyConfigured;service.textContent=data.keyConfigured?'Ready to practice':'API key needed on server';}).catch(()=>{if(form.isConnected)service.textContent='Server unavailable. Refresh to retry.';});
+  const consent=document.createElement('label');consent.className='team-consent';consent.innerHTML='<input type="checkbox" required> <span>Send my audio and answers to the AI service.</span>';button.parentElement.before(consent);
   const error=document.createElement('p');error.className='error';error.setAttribute('role','alert');form.append(error);
   form.onsubmit=async e=>{e.preventDefault();if(button.disabled||!form.reportValidity())return;saveConfig();button.disabled=true;error.textContent='';const label=button.innerHTML;button.textContent='Preparing...';
    try{const result=await teamRequest('interview/question',{...interviewContext(),history:[]});if(!form.isConnected)return;if(typeof result.question!=='string'||!result.question.trim())throw Error('The server returned an empty question.');teamOpening=result.question;start(e);}

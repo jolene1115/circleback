@@ -10,7 +10,7 @@ from google import genai
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 ENV_PATH = ROOT_DIR / ".env"
-MODEL = "gemini-3.8-flash"
+MODEL = "gemini-3.5-flash-lite"
 
 SAMPLE_ANSWER = (
     "On a group project, two teammates disagreed about the tech stack. "
