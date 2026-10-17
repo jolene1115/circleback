@@ -58,4 +58,10 @@ With the API running, in a second terminal:
 ```
 The second command lets you talk; it auto-stops when you pause.
 
+**Full interview practice** (question → answer out loud → transcript → feedback → retry or next):
+```bash
+.venv/bin/python scripts/interview_mic.py --mic --threshold 0.05
+```
+Add `--question "Tell me about yourself."` to skip question generation and save Gemini quota.
+
 Test the LLM alone: `.venv/bin/python -m backend.test_llm --sample`
