@@ -16,6 +16,7 @@ A website where students practice speaking and get AI feedback. Two modes:
 ## 2. Scope
 
 **MVP (focus now)**
+
 - [ ] Home page with Start button
 - [ ] Choose category page (Interview / Public Speaking)
 - [ ] Record audio in the browser
@@ -25,6 +26,7 @@ A website where students practice speaking and get AI feedback. Two modes:
 - [ ] Save attempts (transcript, metrics, feedback) per user
 
 **Later (after the core works)**
+
 - [ ] Progress page (sessions, minutes practiced, trends)
 - [ ] Self-reported confidence rating before/after each session
 - [ ] Difficulty levels (30s, 1 min, harder questions)
@@ -41,12 +43,16 @@ Home -> Choose category
 Progress (later): view past answers and feedback
 ```
 
+
+
 ## 4. Tech stack (proposed, confirm in Open decisions)
 
 - **Framework:** Next.js (React frontend + API routes in one project)
 - **AI:** Google AI Studio, Gemini Flash for questions and feedback; a Gemini transcription model for speech-to-text (confirm exact model IDs in the docs)
 - **Database:** SQLite for local/demo (see Open decisions about deployment)
 - **Secrets:** API keys live in `.env.local` on the server only. Never in frontend code, never committed.
+
+
 
 ## 5. Folder structure
 
@@ -76,9 +82,12 @@ lib/
   types.ts                        # Shared types
 ```
 
+
+
 ## 6. Data flow
 
 **Interview**
+
 1. User enters type (behavioral or resume deep dive), role/scenario, and resume text if deep dive.
 2. `POST /api/interview/question` returns a question.
 3. User records. `POST /api/transcribe` returns a transcript.
@@ -87,6 +96,7 @@ lib/
 6. Save the attempt. "Next question" loops to step 2.
 
 **Public speaking**
+
 1. User enters context (audience, occasion, time limit) and key points.
 2. Record, transcribe, compute metrics.
 3. `POST /api/speaking/feedback` sends context + points + transcript + metrics, returns feedback JSON.
@@ -141,7 +151,6 @@ Gemini must return JSON matching `Feedback`. Validate it before using it, and re
 
 Don't store audio. The transcript is enough, and it simplifies privacy.
 
-
 ## 9. Build order
 
 1. **Prove the hard part:** record in browser -> transcribe -> show transcript. (Backend 2 + Design)
@@ -153,6 +162,8 @@ Don't store audio. The transcript is enough, and it simplifies privacy.
 7. **Later features:** progress page, confidence rating, difficulty levels.
 8. **Demo prep:** seed demo account, rehearse, record a backup demo video.
 
+
+
 ## 10. Open decisions
 
 - [ ] **Deployment target:** laptop demo or public URL? SQLite does not work on Vercel/serverless. If public on serverless, use Turso or Supabase instead.
@@ -162,6 +173,8 @@ Don't store audio. The transcript is enough, and it simplifies privacy.
 - [ ] **Exact model IDs** for Gemini Flash and the transcription model (check Google AI Studio docs).
 - [ ] **Filler words:** does the transcription model keep "um/uh"? (see build order step 2)
 
+
+
 ## 11. Conventions
 
 - **Git:** branch per feature (`feature/recorder`, `feature/gemini-feedback`), small PRs, one reviewer.
@@ -169,6 +182,8 @@ Don't store audio. The transcript is enough, and it simplifies privacy.
 - **Don't commit** the `.db` file (add to `.gitignore`) unless it's intentional seed data.
 - **Prompts** live only in `lib/prompts.ts` so they're easy to tune in one place.
 - **Feedback tone:** encouraging, specific, and never judgmental about accents or speaking style.
+
+
 
 ## 12. Evidence and demo plan (for judges)
 
