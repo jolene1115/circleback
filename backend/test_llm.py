@@ -72,7 +72,8 @@ def generate_text(client: genai.Client, prompt: str) -> str:
 
 
 def main() -> None:
-    client = genai.Client(api_key=load_api_key())
+    load_api_key()
+    client = genai.Client()
 
     question_text = generate_text(client, QUESTION_PROMPT)
     try:
