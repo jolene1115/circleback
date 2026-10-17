@@ -43,16 +43,12 @@ Home -> Choose category
 Progress (later): view past answers and feedback
 ```
 
-
-
 ## 4. Tech stack (proposed, confirm in Open decisions)
 
 - **Framework:** Next.js (React frontend + API routes in one project)
 - **AI:** Google AI Studio, Gemini Flash for questions and feedback; a Gemini transcription model for speech-to-text (confirm exact model IDs in the docs)
 - **Database:** SQLite for local/demo (see Open decisions about deployment)
 - **Secrets:** API keys live in `.env.local` on the server only. Never in frontend code, never committed.
-
-
 
 ## 5. Folder structure
 
@@ -81,8 +77,6 @@ lib/
   db.ts                           # Database client
   types.ts                        # Shared types
 ```
-
-
 
 ## 6. Data flow
 
@@ -162,8 +156,6 @@ Don't store audio. The transcript is enough, and it simplifies privacy.
 7. **Later features:** progress page, confidence rating, difficulty levels.
 8. **Demo prep:** seed demo account, rehearse, record a backup demo video.
 
-
-
 ## 10. Open decisions
 
 - [ ] **Deployment target:** laptop demo or public URL? SQLite does not work on Vercel/serverless. If public on serverless, use Turso or Supabase instead.
@@ -173,8 +165,6 @@ Don't store audio. The transcript is enough, and it simplifies privacy.
 - [ ] **Exact model IDs** for Gemini Flash and the transcription model (check Google AI Studio docs).
 - [ ] **Filler words:** does the transcription model keep "um/uh"? (see build order step 2)
 
-
-
 ## 11. Conventions
 
 - **Git:** branch per feature (`feature/recorder`, `feature/gemini-feedback`), small PRs, one reviewer.
@@ -182,8 +172,6 @@ Don't store audio. The transcript is enough, and it simplifies privacy.
 - **Don't commit** the `.db` file (add to `.gitignore`) unless it's intentional seed data.
 - **Prompts** live only in `lib/prompts.ts` so they're easy to tune in one place.
 - **Feedback tone:** encouraging, specific, and never judgmental about accents or speaking style.
-
-
 
 ## 12. Evidence and demo plan (for judges)
 
