@@ -20,7 +20,7 @@ A website where students practice speaking and get AI feedback. Two modes:
 - [ ] Home page with Start button
 - [ ] Choose category page (Interview / Public Speaking)
 - [ ] Record audio in the browser
-- [ ] Transcribe audio
+- [x] Transcribe audio (backend: `/api/transcribe`, see docs/transcription.md)
 - [ ] Interview mode: generate question, record, feedback, next question
 - [ ] Public speaking mode: context + points, record, feedback, try again
 - [ ] Save attempts (transcript, metrics, feedback) per user
@@ -47,39 +47,35 @@ Progress (later): view past answers and feedback
 
 ## 4. Tech stack (proposed, confirm in Open decisions)
 
-- **Framework:** Next.js (React frontend + API routes in one project)
+- **Backend:** Python + FastAPI (switched from Next.js API routes). Frontend: TBD
 - **AI:** Google AI Studio, Gemini Flash for questions and feedback; a Gemini transcription model for speech-to-text (confirm exact model IDs in the docs)
 - **Database:** SQLite for local/demo (see Open decisions about deployment)
-- **Secrets:** API keys live in `.env.local` on the server only. Never in frontend code, never committed.
+- **Secrets:** API keys live in `.env` at the project root, on the server only. Never in frontend code, never committed.
 
 
 
 ## 5. Folder structure
 
 ```
-app/
-  page.tsx                        # Home
-  choose/page.tsx                 # Pick mode
-  interview/page.tsx              # Setup -> Practice -> Feedback
-  speaking/page.tsx               # Setup -> Practice -> Feedback
-  progress/page.tsx               # Placeholder for later
-  api/
-    interview/question/route.ts   # Generate interview question
-    transcribe/route.ts           # Audio -> transcript (shared)
-    interview/feedback/route.ts   # Transcript + question -> feedback
-    speaking/feedback/route.ts    # Transcript + context/points -> feedback
-    sessions/route.ts             # Save / fetch attempts
-components/
-  Recorder.tsx                    # Mic, timer, returns audio blob (shared)
-  FeedbackCard.tsx                # Renders feedback (shared)
-  LoadingState.tsx
-lib/
-  gemini.ts                       # All Gemini calls (question, feedback)
-  transcribe.ts                   # Transcription call
-  metrics.ts                      # Words/min, filler count, pauses (plain code, no LLM)
-  prompts.ts                      # All prompt templates
-  db.ts                           # Database client
-  types.ts                        # Shared types
+backend/
+  main.py                         # FastAPI app (all routes under /api)
+  config.py                       # Loads .env
+  models.py                       # Shared types (Pydantic): Metrics, Feedback, requests/responses
+  routers/
+    transcribe.py                 # POST /api/transcribe: audio -> transcript (shared)
+    interview.py                  # POST /api/interview/question, /api/interview/feedback
+    speaking.py                   # POST /api/speaking/feedback
+    sessions.py                   # GET/POST /api/sessions: save / fetch attempts
+  services/
+    transcribe.py                 # Transcription call
+    metrics.py                    # Words/min, filler count (plain code, no LLM)
+    gemini.py                     # All Gemini calls (question, feedback)
+    prompts.py                    # All prompt templates
+    db.py                         # Database client
+scripts/
+  transcribe_file.py              # Test: send a file to /api/transcribe
+  live_mic.py                     # Test: talk into the mic, auto-stops on pause
+frontend/                         # TBD (records audio, calls the API)
 ```
 
 
@@ -170,8 +166,8 @@ Don't store audio. The transcript is enough, and it simplifies privacy.
 - [ ] **Login:** real auth (Supabase/Firebase) or anonymous browser-based user ID for now?
 - [ ] **Resume input:** paste text (easier) vs PDF upload. Default: paste text.
 - [ ] **Interview loop:** new question each time, or follow-up based on the previous answer?
-- [ ] **Exact model IDs** for Gemini Flash and the transcription model (check Google AI Studio docs).
-- [ ] **Filler words:** does the transcription model keep "um/uh"? (see build order step 2)
+- [ ] **Exact model IDs** for Gemini Flash and the transcription model (check Google AI Studio docs). Transcription: `gemini-3.5-flash-lite` (fast, separate free quota); `gemini-3.8-flash` free tier is only 20 requests/day.
+- [x] **Filler words:** does the transcription model keep "um/uh"? (see build order step 2) Yes, kept in every test. No word timestamps, so `longPauses` is not supported yet.
 
 
 
