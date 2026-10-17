@@ -1,0 +1,8 @@
+node_modules/
+.env
+.DS_Store
+dist/
+
+# keep personal test recordings out of git
+samples/*
+!samples/.gitkeep

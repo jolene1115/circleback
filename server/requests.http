@@ -1,0 +1,13 @@
+### Health check (is the key configured?)
+GET http://localhost:3001/api/health
+
+### Transcribe a recording (put a file in samples/ and update the name below)
+POST http://localhost:3001/api/transcribe
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="audio"; filename="test.m4a"
+Content-Type: audio/mp4
+
+< ../samples/test.m4a
+--boundary--
