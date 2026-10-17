@@ -93,7 +93,11 @@ def start_ffmpeg(mic: bool, file: Optional[str]) -> subprocess.Popen:
     pcm_args = ["-ac", "1", "-ar", str(SAMPLE_RATE), "-f", "s16le", "-loglevel", "error", "-"]
     source = ["-f", "avfoundation", "-i", ":0"] if mic else ["-re", "-i", file]  # ":0" = default mic
     try:
-        return subprocess.Popen(["ffmpeg", *source, *pcm_args], stdout=subprocess.PIPE)
+        # -nostdin + DEVNULL: otherwise ffmpeg reads the keyboard (its own "q to quit" commands)
+        # and swallows the Enter key meant for our prompts.
+        return subprocess.Popen(
+            ["ffmpeg", "-nostdin", *source, *pcm_args], stdin=subprocess.DEVNULL, stdout=subprocess.PIPE
+        )
     except FileNotFoundError:
         sys.exit("ffmpeg not found. Install it with: brew install ffmpeg")
 

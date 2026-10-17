@@ -44,6 +44,7 @@ def record_one_answer(args):
                 listener.on_frame(bytes(FRAME_BYTES))
     finally:
         ffmpeg.kill()
+        ffmpeg.wait()
     return (result["pcm"], result["duration"]) if result else None
 
 
@@ -62,6 +63,9 @@ def practice(question: str, args) -> bool:
     if not body:
         return False
     print_transcript(1, body)
+    if not body["transcript"].strip():
+        say("No words detected, so there's nothing to give feedback on. Try again, closer to the mic.")
+        return False
 
     say("💬 Getting feedback...")
     fb = post("/interview/feedback", json={"question": question, "transcript": body["transcript"], "metrics": body["metrics"]})
