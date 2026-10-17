@@ -66,7 +66,7 @@ def parse_json(raw_text: str) -> dict:
 
 def generate_text(client: genai.Client, prompt: str) -> str:
     response = client.models.generate_content(
-        model=os.getenv("GEMINI_LLM_MODEL", MODEL),  # override in .env (free quotas are per model)
+        model=MODEL,
         contents=prompt,
     )
     return response.text or ""
