@@ -10,6 +10,10 @@ __pycache__/
 # database (unless intentional seed data)
 *.db
 
+# frontend
+node_modules/
+.next/
+
 # personal test recordings
 samples/*
 !samples/.gitkeep

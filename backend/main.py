@@ -11,8 +11,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from backend.db import init_db
-from backend.routes import users
 from backend.routers import interview, sessions, speaking, transcribe
+from backend.routes import users
 
 app = FastAPI(title="PitchPerfect API")
 
@@ -43,13 +43,14 @@ def health():
     return {"ok": True}
 
 
-for module in (transcribe, interview, speaking, sessions):
-    app.include_router(module.router, prefix="/api")
-
-init_db()
-app.include_router(users.router)
-
-
 @app.get("/")
 def home():
     return {"message": "Server is running"}
+
+
+init_db()
+
+for module in (transcribe, interview, speaking, sessions):
+    app.include_router(module.router, prefix="/api")
+
+app.include_router(users.router)
