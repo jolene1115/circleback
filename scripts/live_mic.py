@@ -20,6 +20,7 @@ import sys
 import threading
 import wave
 from concurrent.futures import ThreadPoolExecutor
+from typing import Callable, Optional
 
 import httpx
 
@@ -53,7 +54,8 @@ def pcm_to_wav(pcm: bytes) -> bytes:
     return buf.getvalue()
 
 
-def send_answer(answer_id: int, pcm: bytes, duration_sec: float):
+def transcribe(answer_id: int, pcm: bytes, duration_sec: float):
+    """POST one answer to /api/transcribe. Returns the response body, or None after printing the error."""
     try:
         res = httpx.post(
             f"{API_URL}/api/transcribe",
@@ -63,9 +65,15 @@ def send_answer(answer_id: int, pcm: bytes, duration_sec: float):
         )
         body = res.json()
     except httpx.ConnectError:
-        return say(f"❌ Could not reach {API_URL}. Is the API running?")
+        say(f"❌ Could not reach {API_URL}. Is the API running?")
+        return None
     if res.status_code != 200:
-        return say(f"❌ [#{answer_id}] {body.get('error')}")
+        say(f"❌ [#{answer_id}] {body.get('error')}")
+        return None
+    return body
+
+
+def print_transcript(answer_id: int, body: dict):
     m = body["metrics"]
     fillers = ", ".join(f"{w}×{n}" for w, n in m["fillerWords"].items()) or "none"
     say(
@@ -74,11 +82,29 @@ def send_answer(answer_id: int, pcm: bytes, duration_sec: float):
     )
 
 
+def send_answer(answer_id: int, pcm: bytes, duration_sec: float):
+    body = transcribe(answer_id, pcm, duration_sec)
+    if body:
+        print_transcript(answer_id, body)
+
+
+def start_ffmpeg(mic: bool, file: Optional[str]) -> subprocess.Popen:
+    """Mic or file -> raw 16 kHz mono PCM on stdout."""
+    pcm_args = ["-ac", "1", "-ar", str(SAMPLE_RATE), "-f", "s16le", "-loglevel", "error", "-"]
+    source = ["-f", "avfoundation", "-i", ":0"] if mic else ["-re", "-i", file]  # ":0" = default mic
+    try:
+        return subprocess.Popen(["ffmpeg", *source, *pcm_args], stdout=subprocess.PIPE)
+    except FileNotFoundError:
+        sys.exit("ffmpeg not found. Install it with: brew install ffmpeg")
+
+
 class Listener:
-    def __init__(self, silence_ms: int, threshold: float, pool: ThreadPoolExecutor):
+    """Feed it 20ms frames; calls on_answer(answer_id, pcm, duration_sec) each time the speaker pauses."""
+
+    def __init__(self, silence_ms: int, threshold: float, on_answer: Callable[[int, bytes, float], None]):
         self.silence_ms = silence_ms
         self.threshold = threshold
-        self.pool = pool
+        self.on_answer = on_answer
         self.preroll: list[bytes] = []
         self.frames: list[bytes] = []
         self.speaking = False
@@ -118,7 +144,7 @@ class Listener:
         pcm = b"".join(speech)
         duration = round(len(pcm) / (SAMPLE_RATE * 2), 2)
         say(f"⏹  [#{answer_id}] stopped, {duration}s of speech. Transcribing...")
-        self.pool.submit(send_answer, answer_id, pcm, duration)
+        self.on_answer(answer_id, pcm, duration)
 
 
 def main():
@@ -131,16 +157,10 @@ def main():
     if not args.mic and not args.file:
         parser.error("use --mic or give an audio file")
 
-    pcm_args = ["-ac", "1", "-ar", str(SAMPLE_RATE), "-f", "s16le", "-loglevel", "error", "-"]
-    source = ["-f", "avfoundation", "-i", ":0"] if args.mic else ["-re", "-i", args.file]  # ":0" = default mic
-    try:
-        ffmpeg = subprocess.Popen(["ffmpeg", *source, *pcm_args], stdout=subprocess.PIPE)
-    except FileNotFoundError:
-        sys.exit("ffmpeg not found. Install it with: brew install ffmpeg")
-
+    ffmpeg = start_ffmpeg(args.mic, args.file)
     say("Listening... start talking (Ctrl+C to quit)" if args.mic else f"Streaming {args.file}...")
     with ThreadPoolExecutor(max_workers=4) as pool:
-        listener = Listener(args.silence, args.threshold, pool)
+        listener = Listener(args.silence, args.threshold, lambda *answer: pool.submit(send_answer, *answer))
         try:
             while chunk := ffmpeg.stdout.read(FRAME_BYTES):
                 if len(chunk) == FRAME_BYTES:
