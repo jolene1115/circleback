@@ -15,6 +15,10 @@ let canvas = null,
   animation = 0,
   last = 0,
   helloAt = 0;
+// Landing page: lean in while Explore is hovered, nod when it's clicked.
+let welcomeHover = 0,
+  welcomeHoverTarget = 0,
+  welcomeConfirmAt = -10000;
 
 // --- Motion state --------------------------------------------------------------------------------
 let progress = 0,
@@ -90,7 +94,11 @@ export function onFigureState(fn) {
 export function setFigureState(s) {
   if (s !== state) {
     stateAt = performance.now();
-    if (s === 'listening' && state === 'speaking') returnAt = stateAt + 700;
+    if (['listening', 'responding'].includes(s) && ['speaking', 'thinking'].includes(state)) {
+      returnAt = stateAt + 300;
+      blinkAt = stateAt;
+      gazeTarget = gazeYTarget = 0;
+    }
     if (s === 'responding') {
       attentionAt = stateAt;
       lastAck = stateAt;
@@ -122,6 +130,24 @@ export function setVoiceInput(node, isActive) {
   analyserActive = isActive || (() => false);
   samples = node ? new Float32Array(node.fftSize) : null;
   if (!node) level = 0;
+}
+
+/** Landing-page Explore button: 'hover', 'leave' or 'confirm'. */
+export function welcome(detail) {
+  welcomeHoverTarget = detail === 'hover' ? 1 : 0;
+  if (detail === 'confirm') welcomeConfirmAt = performance.now();
+}
+
+function welcomePose(t, dt) {
+  const active = document.body.classList.contains('moon-landing') && !reducedMotion.matches;
+  welcomeHover += ((active ? welcomeHoverTarget : 0) - welcomeHover) * (1 - Math.exp(-dt * 5));
+  if (!active) return {tilt: 0, lift: 0, nod: 0};
+  const elapsed = (t - helloAt) / 1000;
+  return {
+    tilt: welcomeHover * 0.035,
+    lift: Math.sin(Math.PI * Math.max(0, Math.min(1, elapsed / 1.4))) * 2,
+    nod: Math.sin(Math.PI * Math.max(0, Math.min(1, (t - welcomeConfirmAt) / 420))) * 4,
+  };
 }
 
 export function nod(t) {
@@ -227,17 +253,21 @@ function drawBackground(c, t, dt) {
 function drawGreeting(c, t, anchor) {
   if (!document.body.classList.contains('moon-landing')) return;
   const elapsed = (t - helloAt) / 1000;
-  const phase = Math.max(0, Math.min(1, (elapsed - 0.6) / 3));
-  const wave = reducedMotion.matches ? 0 : Math.sin(phase * Math.PI * 4) * Math.sin(phase * Math.PI) * 0.1;
+  const phase = Math.max(0, Math.min(1, (elapsed - 1.1) / 2.8));
+  const rest = reducedMotion.matches ? 0 : Math.max(0, Math.min(1, (elapsed - 3.9) / 1.8));
+  const relaxed = rest * rest * (3 - 2 * rest);
+  const wave = reducedMotion.matches ? 0 : Math.sin(phase * Math.PI * 4) * Math.sin(phase * Math.PI) * 0.065;
   const pivot = {x: 800, y: 375};
   for (const point of greetingPoints) {
-    const hand = Math.max(0, Math.min(1, (400 - point.y) / 65)),
-      angle = wave * hand;
-    const dx = point.x - pivot.x,
-      dy = point.y - pivot.y;
+    const hand = Math.max(0, Math.min(1, (425 - point.y) / 70));
+    const weight = hand * hand * (3 - 2 * hand),
+      angle = (wave + 0.13 * relaxed) * weight;
+    const fingertip = Math.max(0, Math.min(1, (330 - point.y) / 70));
+    const dx = (point.x - pivot.x) * (1 - 0.07 * relaxed * fingertip),
+      dy = point.y - pivot.y + 4 * relaxed * fingertip;
     c.lineTo(
       anchor.x + pivot.x + dx * Math.cos(angle) - dy * Math.sin(angle) - 703,
-      anchor.y + pivot.y + dx * Math.sin(angle) + dy * Math.cos(angle) - 413,
+      anchor.y + pivot.y + dx * Math.sin(angle) + dy * Math.cos(angle) - 413 + 9 * relaxed * weight,
     );
   }
 }
@@ -247,6 +277,8 @@ function draw(t) {
   const {view} = scene;
   const dt = Math.min((t - last) / 1000 || 0.016, 0.05);
   last = t;
+  const welcomeNow = welcomePose(t, dt);
+  if (t - pointerAt > 2600) gazeTarget = gazeYTarget = 0;
   const goal = (state === 'speaking' && t - stateAt > 130 && thought < 0.16) || t < holdUntil ? 1 : 0;
   progress += (goal - progress) * (1 - Math.exp(-dt * (reducedMotion.matches ? 18 : goal ? 3.8 : 2.7)));
   eyeThought += ((state === 'thinking' ? 1 : 0) - eyeThought) * (1 - Math.exp(-dt * 9));
@@ -342,8 +374,10 @@ function draw(t) {
       (reducedMotion.matches ? 0 : gazeY * 3 - Math.abs(pose.look) * 3) * eye -
       6 * Math.abs(pose.brow) * (pose.brow > 0 ? rightEye : leftEye);
     // Rotate around the neck; shoulders stay anchored while the face looks upward.
-    const tilt = nodAmount + (-0.16 * thinking + 0.045 * curious - 0.06 * unsure + 0.035 * pose.tilt) * head;
+    const tilt =
+      nodAmount + (-0.16 * thinking + 0.045 * curious - 0.06 * unsure + 0.035 * pose.tilt + welcomeNow.tilt) * head;
     const leaning = reducedMotion.matches ? 0 : lean * head;
+    const breath = (Math.sin(time * 1.15) + 0.22 * Math.sin(time * 0.61)) * 0.65;
     const x = 500 + (px * Math.cos(tilt) - py * Math.sin(tilt)) * (1 + 0.045 * leaning),
       y =
         350 +
@@ -352,7 +386,11 @@ function draw(t) {
         8 * thinking * head +
         (reducedMotion.matches
           ? 0
-          : Math.sin(time * 0.9) * 0.8 + attention * 7 * head * (1 - thinking) + leaning * 7 - returning * 5 * head);
+          : breath * (0.35 + 0.65 * head) +
+            attention * 7 * head * (1 - thinking) +
+            leaning * 7 -
+            returning * 5 * head +
+            (welcomeNow.nod - welcomeNow.lift) * head);
     const envelope = Math.pow(Math.sin(Math.PI * u), 1.6),
       pulse = reducedMotion.matches ? 0.55 : 0.5 + 0.25 * Math.sin(time * 2.1) + 0.18 * Math.sin(time * 4.3);
     const wy =

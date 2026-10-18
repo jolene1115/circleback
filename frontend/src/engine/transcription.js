@@ -1,4 +1,10 @@
-// Live transcription: while recording, send 8-second WAV chunks to /api/transcribe in order.
+// Live transcription: while recording, send WAV chunks to /api/transcribe in order. A chunk is sent at
+// the first half-second pause after 4 seconds of audio, or after 8 seconds of continuous speech.
+
+const MIN_CHUNK_SEC = 4,
+  MAX_CHUNK_SEC = 8,
+  PAUSE_SEC = 0.5,
+  QUIET_RMS = 0.008;
 
 function pcmWav(pcm, sampleRate) {
   const buffer = new ArrayBuffer(44 + pcm.length * 2),
@@ -35,7 +41,7 @@ export async function startLiveTranscript(stream, recorder, handlers) {
     processor = context.createScriptProcessor(4096, 1, 1);
   const silent = context.createGain();
   silent.gain.value = 0;
-  const state = {parts: [], count: 0, chain: Promise.resolve(), valid: true, requests: new Set(), failed: false, stopping: false};
+  const state = {parts: [], count: 0, quietSamples: 0, chain: Promise.resolve(), valid: true, requests: new Set(), failed: false, stopping: false};
 
   function flush() {
     if (!state.count) return;
@@ -47,6 +53,7 @@ export async function startLiveTranscript(stream, recorder, handlers) {
     }
     state.parts = [];
     state.count = 0;
+    state.quietSamples = 0;
     state.chain = state.chain.then(async () => {
       if (!state.valid) return;
       const controller = new AbortController();
@@ -79,7 +86,11 @@ export async function startLiveTranscript(stream, recorder, handlers) {
     const data = new Float32Array(e.inputBuffer.getChannelData(0));
     state.parts.push(data);
     state.count += data.length;
-    if (state.count >= context.sampleRate * 8) flush();
+    const rms = Math.sqrt(data.reduce((sum, value) => sum + value * value, 0) / data.length);
+    state.quietSamples = rms < QUIET_RMS ? state.quietSamples + data.length : 0;
+    const rate = context.sampleRate;
+    if (state.count >= rate * MAX_CHUNK_SEC || (state.count >= rate * MIN_CHUNK_SEC && state.quietSamples >= rate * PAUSE_SEC))
+      flush();
   };
   source.connect(processor);
   processor.connect(silent);
@@ -105,6 +116,8 @@ export async function startLiveTranscript(stream, recorder, handlers) {
   await context.resume();
   return {
     stop,
+    // Exposed for tests: resolves when every chunk sent so far has been transcribed.
+    settled: () => state.chain,
     get failed() {
       return state.failed;
     },

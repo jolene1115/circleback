@@ -86,8 +86,8 @@ function useSessionConfig(session) {
   configure({
     custom: session.topic,
     context: session.context || '',
-    focus: session.focus.filter(f => focusOptions.includes(f)),
-    extra: session.focus.filter(f => !focusOptions.includes(f)).join(', '),
+    focus: session.focus || [],
+    extra: '',
   });
 }
 
@@ -100,6 +100,7 @@ export function retrySession(session) {
 /** "Retry this question": start an interview with that question. */
 export function retryQuestion(session, question) {
   useSessionConfig(session);
+  configure({rounds: '1'});
   startInterview(question);
 }
 

@@ -23,10 +23,11 @@ import Figure from './components/Figure.jsx';
 import InkEditor from './components/InkEditor.jsx';
 import InterviewerCollection from './components/InterviewerCollection.jsx';
 import {checkHealth, request} from './engine/api.js';
-import {setFigureState} from './engine/figure.js';
+import {setFigureState, welcome} from './engine/figure.js';
 import {getInterviewerName, onInterviewerChange} from './engine/ink.js';
 import {currentVoice, onVoicesChange, selectVoice, speak, stopVoice, voiceId, voices} from './engine/voice.js';
-import Review from './Review.jsx';
+import Feedback from './Feedback.jsx';
+import SetupPage from './SetupPage.jsx';
 import InterviewRoom from './room/InterviewRoom.jsx';
 import {
   configure,
@@ -35,6 +36,8 @@ import {
   focusOptions,
   getState,
   go,
+  retryQuestion,
+  retrySession,
   selectSession,
   startInterview,
   topicOptions,
@@ -77,7 +80,17 @@ function Home({exploring, setExploring}) {
             <strong>Your personal speaking coach.</strong>
             <span>A little practice for your next big conversation.</span>
           </p>
-          <button className="main-button explore-button" onClick={() => setExploring(true)}>
+          <button
+            className="main-button explore-button"
+            onPointerEnter={() => welcome('hover')}
+            onPointerLeave={() => welcome('leave')}
+            onFocus={() => welcome('hover')}
+            onBlur={() => welcome('leave')}
+            onClick={() => {
+              welcome('confirm');
+              setTimeout(() => setExploring(true), matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 440);
+            }}
+          >
             Explore <ArrowRight />
           </button>
         </div>
@@ -480,11 +493,21 @@ export default function App() {
           {view === 'home' ? (
             <Home exploring={exploring} setExploring={setExploring} />
           ) : view === 'setup' ? (
-            <Setup />
+            <SetupPage Character={Character} />
           ) : view === 'history' ? (
             <History sessions={sessions} />
           ) : view === 'summary' ? (
-            <Review session={selectedSession} />
+            selectedSession ? (
+            <Feedback
+              key={selectedSession.id}
+              session={selectedSession}
+              onBack={() => go('history')}
+              onPractice={() => retrySession(selectedSession)}
+              onRetry={turn => retryQuestion(selectedSession, turn.q)}
+            />
+          ) : (
+            <History sessions={sessions} />
+          )
           ) : (
             <>
               <div className="page-head">

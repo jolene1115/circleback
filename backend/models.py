@@ -19,13 +19,6 @@ class Metrics(BaseModel):
     longPauses: Optional[NonNegativeInt] = None  # only if word timestamps are available
 
 
-class StarCheck(BaseModel):
-    situation: bool
-    task: bool
-    action: bool
-    result: bool
-
-
 class PointCovered(BaseModel):
     point: str
     covered: bool
@@ -74,22 +67,23 @@ class InterviewFeedbackRequest(BaseModel):
     interview: Optional[InterviewContext] = None
 
 
+class InterviewStarCheck(BaseModel):
+    # Null means not assessed, distinct from a missing part of an applicable story.
+    situation: Optional[bool]
+    task: Optional[bool]
+    action: Optional[bool]
+    result: Optional[bool]
+
+
 class InterviewFeedbackResponse(BaseModel):
     strength: NonEmptyText
     improvement: NonEmptyText
     # Extras: the AI always returns these, but they're optional so 3-field clients/saves still validate.
     example_rewrite: Optional[str] = None  # one of their sentences, rewritten the way a strong candidate would say it
     retry_challenge: NonEmptyText
-    star_check: Optional[StarCheck] = None
-    organization_tip: Optional[str] = None  # how to structure this answer into short spoken parts
-    delivery_tip: Optional[str] = None  # only when pace or filler words were off
-
-
-class InterviewFeedbackWithMetrics(InterviewFeedbackResponse):
-    """What POST /api/interview/feedback returns. Saved attempts keep metrics separately, so history uses
-    InterviewFeedbackResponse."""
-
-    metrics: Optional[Metrics] = None  # the numbers the feedback was based on (computed in code), for display
+    star_check: Optional[InterviewStarCheck] = None
+    delivery_tip: Optional[str] = None  # wording / verbal organization tip (shown as "Verbal organization")
+    metrics: Optional[Metrics] = None  # pace and fillers, computed in code from the transcript
 
 
 # POST /api/speaking/feedback

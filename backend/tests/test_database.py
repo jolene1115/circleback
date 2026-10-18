@@ -11,7 +11,7 @@ from backend.routers import interview, speaking
 FB = dict(strength='Clear example', improvement='Add detail', example_rewrite='I built [project] for [users].',
           retry_challenge='Explain the outcome',
           star_check=dict(situation=True, task=False, action=True, result=False),
-          organization_tip='Project, your role, what you did, the outcome.', delivery_tip=None)
+          delivery_tip='Lead with your role, then the outcome.')
 SPEAKING_FB = dict(summary='Clear', strengths=['Structure'], improvements=['Slow down'],
                    pointsCovered=[dict(point='intro', covered=True, evidence='"Hello everyone"')],
                    exampleRewrite='Hello everyone, today I will cover [topic].', deliveryTip=None,
@@ -47,13 +47,12 @@ class DatabaseIntegrationTests(unittest.TestCase):
                 'sessionId': session_id, 'question': 'Tell me about yourself',
                 'transcript': 'um I built a project', 'metrics': METRICS})
         self.assertEqual(response.status_code, 200, response.text)
-        body = response.json()
-        self.assertEqual(body.pop('metrics')['fillerCount'], 1)  # recomputed on the server, not the client's 999
-        self.assertEqual(body, FB)
+        self.assertEqual({key: response.json()[key] for key in FB}, FB)
+        self.assertEqual(response.json()['metrics']['wordsPerMinute'], 10)
         with TestClient(app) as restarted:
             saved = restarted.get(f'/api/sessions/{session_id}/attempts').json()
         self.assertEqual(len(saved), 1)
-        self.assertEqual(saved[0]['feedback'], FB)
+        self.assertEqual(saved[0]['feedback'], response.json())
         self.assertEqual(saved[0]['metrics']['fillerCount'], 1)
         self.assertEqual(saved[0]['metrics']['wordsPerMinute'], 10)
         self.assertEqual(self.client.get('/api/sessions', params={'userId': self.user['id']}).json()[0]['id'], session_id)

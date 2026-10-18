@@ -47,11 +47,22 @@ Keys stay on the server. No key or audio is included in the frontend assets.
 
 - POST /api/interview/question accepts an optional context body: topic, context,
   focus, tone, history. Calls without a body still work.
-- PCM microphone chunks become WAV multipart uploads to /api/transcribe every
-  eight seconds and at stop. Partial transcripts appear as responses arrive.
+- PCM microphone chunks become WAV multipart uploads to /api/transcribe after
+  four seconds when a half-second quiet interval is detected, at eight seconds
+  during continuous speech, and at stop. Partial transcripts appear in order.
+  Earlier chunks can increase Gemini request counts and quota usage.
 - POST /api/interview/feedback receives question, transcript and optional
   interview context/history. Its retry_challenge becomes the next question.
 - Strengths and improvements are saved with each turn and displayed in History.
+- Recorded duration is accumulated from captured PCM samples. The server computes
+  average pace and possible filler words from that duration and the transcript;
+  the frontend saves these metrics with each answer for the delivery section.
+- Optional star_check and delivery_tip fields add structure and verbal organization
+  coaching. Both star_check and each dimension can be null (not assessed), distinct
+  from false (missing detail). Non-STAR questions must not fail validation.
+- Feedback can be previewed without API calls at /?theme=moon&preview=feedback.
+  Preview data is labeled as sample feedback. Old answers without metrics show
+  missing-data states; pronunciation, intonation and pause timing are not assessed.
 - API failures show a retryable error; they do not substitute sample AI results.
 
 ## Remaining limits
@@ -62,3 +73,15 @@ The new database/user endpoints remain available for the next integration step.
 Transcription is chunked, not word-level streaming; chunk boundaries may affect
 recognition. Browser voices vary by device. Cloud tests need a configured key
 and may consume the project's quota. Automated integration tests mock Gemini.
+
+## Canvas lifecycle and interaction
+
+Figure and InterviewRoom use layout-effect cleanup so the old animation stops
+before the new canvas mounts. A passive cleanup can cancel the new room's first
+frame, leaving the interviewer invisible. Keep drawing transformations shared
+between the figure and custom ink. Welcome gestures, pointer attention and
+listening transitions respect prefers-reduced-motion.
+
+Run `node --test frontend/test-transcription.mjs` for chunk timing, request order,
+stop-flush and captured-duration checks. Backend API tests cover feedback schema
+validation, computed metrics and persistence without live Gemini requests.
