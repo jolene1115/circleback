@@ -332,8 +332,15 @@ function draw(t) {
       view === 'setup'
         ? Math.min(1.2, h / 400)
         : Math.min(immersive ? 1.4 : 1, (h * (immersive ? (short ? 0.49 : 0.62) : 1)) / 500);
-  c.translate((w - w * scale) / 2, immersive ? h * (short ? 0.31 : 0.37) - 250 * scale : (h - 500 * scale) / 2);
-  c.scale(scale, scale);
+  if (view === 'home') {
+    const mobile = rect.width <= 760;
+    const homeScale = mobile ? Math.min(1.55, h * 0.38 / 500) : Math.min(rect.width < 1100 ? 0.8 : 1, 1280 / rect.width);
+    c.translate(w * 0.5 - 500 * homeScale, h * 0.5 - 250 * homeScale);
+    c.scale(homeScale, homeScale);
+  } else {
+    c.translate((w - w * scale) / 2, immersive ? h * (short ? 0.31 : 0.37) - 250 * scale : (h - 500 * scale) / 2);
+    c.scale(scale, scale);
+  }
   if (t > nextBlink) {
     blinkAt = t;
     doubleBlinkAt = Math.random() < 0.18 ? t + 310 : -10000;

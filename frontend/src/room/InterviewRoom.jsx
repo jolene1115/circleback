@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useLayoutEffect, useRef, useState} from 'react';
-import {ArrowUp, AudioLines, ChevronRight, LoaderCircle, Mic, MicOff, RotateCcw, Square, Volume2, VolumeX, X} from 'lucide-react';
+import {ArrowUp, AudioLines, ChevronRight, LoaderCircle, Mic, MicOff, Square, Volume2, VolumeX, X} from 'lucide-react';
 import './room-controls.css';
 
 import {request} from '../engine/api.js';
@@ -527,9 +527,6 @@ export default function InterviewRoom({opening, mode = 'interview'}) {
                 <RoomTool label={muteLabel} aria-pressed={autoSpeak} disabled={submitting || !!feedback} onClick={toggleAutoSpeak}>
                   {autoSpeak ? <Volume2 /> : <VolumeX />}
                 </RoomTool>
-                <RoomTool label={speaking ? 'Stop question audio' : 'Replay question'} disabled={submitting || isRecording || starting || !!feedback} onClick={speakQuestion}>
-                  {speaking ? <Square /> : <RotateCcw />}
-                </RoomTool>
                 <RoomTool label="Auto-record after question" hint={'Auto-record: ' + (autoRecord ? 'on' : 'off')} role="switch" aria-checked={autoRecord} onClick={() => {
                   autoRecordPreference = !autoRecord;
                   setAutoRecord(!autoRecord);
@@ -581,6 +578,7 @@ export default function InterviewRoom({opening, mode = 'interview'}) {
                       Alex <span className="muted">/ {config.tone}</span>
                     </div>
                     <h2 ref={caption} aria-label={question}>
+                      <button type="button" className="question-replay" aria-label={speaking ? 'Stop question audio' : speechMode ? 'Replay prompt' : 'Replay question'} title={speaking ? 'Stop question audio' : speechMode ? 'Replay prompt' : 'Replay question'} disabled={submitting || isRecording || starting || !!feedback} onClick={speakQuestion}>
                       {words.map(match => (
                         <span
                           key={match.index}
@@ -591,6 +589,7 @@ export default function InterviewRoom({opening, mode = 'interview'}) {
                           {match[0] + ' '}
                         </span>
                       ))}
+                      </button>
                     </h2>
                   </div>
                   <form id="answerForm" onSubmit={submit} style={feedback ? {display: 'none'} : undefined}>
