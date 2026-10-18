@@ -47,12 +47,16 @@ export default function SpeakingSetup({Character}) {
   return (
     <div className="interview-setup">
       <header className="setup-new-heading">
-        <button type="button" className="icon-button" aria-label="Back to practice" onClick={() => go('home')}>
+        <button type="button" className="icon-button" aria-label="Back to practice" onClick={() => go('home', {showPracticeChoices: true})}>
           <ArrowLeft />
         </button>
         <h1>Your next speech.</h1>
       </header>
       <form onSubmit={start} className="setup-new-form">
+        <section className="setup-character">
+          <h2>Your coach</h2>
+          <Character />
+        </section>
         <section className="setup-target">
           <label htmlFor="speech-context">What is your speech about?</label>
           <input
@@ -107,10 +111,6 @@ export default function SpeakingSetup({Character}) {
               <Plus size={17} />
             </button>
           </div>
-        </section>
-        <section className="setup-character">
-          <h2>Your coach</h2>
-          <Character />
         </section>
         <details className="setup-advanced">
           <summary><SlidersHorizontal size={16} />Session settings<ChevronDown size={16} /></summary>

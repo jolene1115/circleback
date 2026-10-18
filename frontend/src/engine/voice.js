@@ -22,7 +22,7 @@ export function currentVoice() {
   const list = voices();
   return (
     list.find(v => voiceId(v) === preference) ||
-    list.find(v => v.name === 'Organ') ||
+    list.find(v => v.name === 'Karen' && /^en[-_]AU$/i.test(v.lang)) ||
     list.find(v => v.default) ||
     list[0]
   );

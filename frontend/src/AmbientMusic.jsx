@@ -1,9 +1,17 @@
-import React,{useEffect,useRef} from 'react';
+import React,{useEffect,useRef,useState} from 'react';
+import {Volume2,VolumeX} from 'lucide-react';
 import './ambient-music.css';
 import {getState} from './store.js';
 import {getFigureState,onFigureState} from './engine/figure.js';
 export default function AmbientMusic(){
  const audio=useRef(null);
+ const [muted,setMuted]=useState(()=>{try{return localStorage.getItem('cadence-music-muted')==='true';}catch{return false;}});
+ const mutedRef=useRef(muted);
+ function toggleMute(){
+  const next=!muted;
+  mutedRef.current=next;setMuted(next);
+  try{localStorage.setItem('cadence-music-muted',String(next));}catch{}
+ }
  useEffect(()=>{
   const element=audio.current;
   let engine=null,frame,last=performance.now(),disposed=false,state=getFigureState();
@@ -30,7 +38,7 @@ export default function AmbientMusic(){
    const e=engine,playing=!document.hidden&&!element.paused&&e?.context.state==='running';
    const duck=getState().view==='room'?(state==='responding'?0:state==='speaking'?.2:.55):1;
    if(e){
-    e.gain.gain.setTargetAtTime(playing?.16*duck:0,e.context.currentTime,duck===0?.04:.7);
+    e.gain.gain.setTargetAtTime(playing&&!mutedRef.current?.16*duck:0,e.context.currentTime,mutedRef.current||duck===0?.04:.7);
     e.analyser.getByteFrequencyData(e.bins);
     const average=(start,end)=>{let sum=0;for(let i=start;i<end;i++)sum+=e.bins[i];return sum/((end-start)*255);};
     const strength=playing?duck:0,smooth=1-Math.exp(-dt*.9);
@@ -52,5 +60,6 @@ export default function AmbientMusic(){
   };
  },[]);
  return <><audio ref={audio} data-ambient-music src="/audio/reverie-scott-buckley.mp3" preload="auto" loop hidden/>
+ <button type="button" className="music-toggle" onClick={toggleMute} aria-label={muted?'Unmute background music':'Mute background music'} aria-pressed={muted} title={muted?'Unmute background music':'Mute background music'}>{muted?<VolumeX size={18}/>:<Volume2 size={18}/>}<span>Music {muted?'off':'on'}</span></button>
  <small className="music-credit"><a href="https://www.scottbuckley.com.au/library/reverie/" target="_blank" rel="noreferrer">Reverie · Scott Buckley</a><span> · </span><a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">CC BY 4.0</a></small></>;
 }
