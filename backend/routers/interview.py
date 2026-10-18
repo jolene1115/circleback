@@ -1,7 +1,7 @@
 """Interview mode: generate a question, then give feedback on the spoken answer.
 Uses the Gemini helpers in backend/test_llm.py."""
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
 from google import genai
 from google.genai import errors
 
@@ -13,6 +13,7 @@ from backend.models import (
     QuestionResponse,
 )
 from backend.services import db
+from backend.routes.accounts import protect_session
 from backend.services.metrics import compute_metrics
 from backend.test_llm import (
     QUESTION_PROMPT,
@@ -85,8 +86,9 @@ def question(request: InterviewContext | None = None, client=Depends(get_client)
 
 
 @router.post("/feedback", response_model=InterviewFeedbackResponse)
-def feedback(request: InterviewFeedbackRequest, client=Depends(get_client)):
+def feedback(request: InterviewFeedbackRequest, http_request: Request, client=Depends(get_client)):
     if request.sessionId:
+        protect_session(request.sessionId, http_request)
         db.get_session(request.sessionId, "interview")
 
     # Pace and filler numbers are computed in code from the final transcript, using the recording

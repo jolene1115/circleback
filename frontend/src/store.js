@@ -1,5 +1,6 @@
 // App state shared by the pages: current view, interview and speech setup, and saved sessions.
 import {useSyncExternalStore} from 'react';
+import {accountRequest} from './account-api.js';
 import {toast} from './engine/toast.js';
 
 const SESSIONS_KEY = 'cadence-sessions-v1';
@@ -14,6 +15,10 @@ function loadSessions() {
 }
 
 let state = {
+  user: null,
+  accountReady: false,
+  syncError: '',
+  syncing: false,
   view: 'home',
   config: {
     type: 'behavioral',
@@ -58,10 +63,10 @@ export function useAppState() {
 export const currentTopic = (config = state.config) => config.custom.trim() || config.topic;
 export const focusList = (config = state.config) => [...config.focus, ...(config.extra ? [config.extra] : [])];
 
-export function go(view) {
+export function go(view, {showPracticeChoices = false} = {}) {
   // `navigation` changes on every go(), even to the same view (e.g. the home page resets to its landing state).
   if (view === 'home') state = {...state, config: {...state.config, type: 'behavioral', resumeText: ''}};
-  update({view, navigation: (state.navigation || 0) + 1});
+  update({view, showPracticeChoices, navigation: (state.navigation || 0) + 1});
   window.scrollTo({top: 0, behavior: 'instant'});
 }
 
@@ -124,7 +129,8 @@ export function finishSession(turns) {
   const speaking = state.interview.mode === 'speaking';
   const {speech, config} = state;
   const entry = {
-    id: String(Date.now()),
+    id: crypto.randomUUID(),
+    createdAt: new Date().toISOString(),
     mode: speaking ? 'speaking' : 'interview',
     topic: speaking ? speech.context.trim() : currentTopic(),
     date: new Date().toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'}),
@@ -136,11 +142,98 @@ export function finishSession(turns) {
   const sessions = [entry, ...state.sessions];
   let saved = true;
   try {
-    localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
+    localStorage.setItem(state.user ? accountKey(state.user.id) : SESSIONS_KEY, JSON.stringify(sessions));
   } catch {
     saved = false;
   }
   update({sessions, selectedSession: entry});
   go('summary');
-  if (!saved) toast('Storage is unavailable. This session lasts until you close the page.');
+  if (!saved) toast('Storage is unavailable. Keep this page open until your interview syncs.');
+  if (state.user) syncHistory().catch(() => {});
+}
+
+
+const accountKey = id => 'circleback-account-history-' + id;
+let syncPromise = null;
+
+function cachedHistory(id) {
+  try { const entries = JSON.parse(localStorage.getItem(accountKey(id)) || '[]'); return Array.isArray(entries) ? entries : []; }
+  catch { return []; }
+}
+
+export async function syncHistory() {
+  if (syncPromise) return syncPromise.then(() => syncHistory());
+  const user = state.user;
+  if (!user) return;
+  update({syncing: true});
+  syncPromise = (async () => {
+    try {
+      const entries = [...state.sessions];
+      for (let i = 0; i < entries.length; i += 20) {
+        await accountRequest('history', {entries: entries.slice(i, i + 20)});
+      }
+      const remote = [];
+      for (let offset = 0; ; offset += 100) {
+        const page = await accountRequest(`history?limit=100&offset=${offset}`);
+        remote.push(...page);
+        if (page.length < 100) break;
+      }
+      if (state.user?.id !== user.id) return;
+      // Retain any answer completed while the network requests were running.
+      const merged = [...new Map([...remote, ...state.sessions].map(s => [s.id, s])).values()];
+      merged.sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
+      try { localStorage.setItem(accountKey(user.id), JSON.stringify(merged)); } catch {}
+      update({sessions: merged, syncError: ''});
+    } catch (error) {
+      if (state.user?.id === user.id) update({syncError: 'History has not synced. ' + error.message});
+      throw error;
+    } finally { syncPromise = null; if (state.user?.id === user.id) update({syncing: false}); }
+  })();
+  return syncPromise;
+}
+
+async function activate(user) {
+  update({user, accountReady: true, sessions: cachedHistory(user.id), selectedSession: null, syncError: ''});
+  await syncHistory().catch(() => {});
+}
+
+export async function initializeAccount() {
+  try { await activate(await accountRequest('me')); }
+  catch { update({accountReady: true}); }
+}
+
+export async function authenticate(mode, values) {
+  if (syncPromise) await syncPromise.catch(() => {});
+  await activate(await accountRequest(mode, values));
+  go('home', {showPracticeChoices: true});
+}
+
+export async function logoutAccount() {
+  if (syncPromise) await syncPromise.catch(() => {});
+  await accountRequest('logout', {});
+  update({user: null, sessions: loadSessions(), selectedSession: null, syncError: ''});
+  go('home');
+}
+
+export function guestHistoryCount() { return loadSessions().length; }
+
+export async function importGuestHistory() {
+  if (!state.user) return;
+  const entries = loadSessions();
+  for (let i = 0; i < entries.length; i += 20) {
+    await accountRequest('history', {entries: entries.slice(i, i + 20)});
+  }
+  // Only remove the guest copy after every batch is safely stored on the server.
+  localStorage.removeItem(SESSIONS_KEY);
+  await syncHistory();
+}
+
+
+export function explorePractice() {
+  if (state.user) go('home', {showPracticeChoices: true});
+  else go('account');
+}
+
+export function continueAsGuest() {
+  go('home', {showPracticeChoices: true});
 }
