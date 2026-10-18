@@ -55,24 +55,24 @@ async function recorder({holdFirst = false} = {}) {
   };
 }
 
-test('sends at a natural pause after four seconds', async () => {
+test('sends at a natural pause after two seconds', async () => {
   const r = await recorder();
-  r.feed(0.1, 3.5);
+  r.feed(0.1, 1.5);
   r.feed(0, 0.5);
   await r.settle();
-  assert.deepEqual(r.requests, [{url: '/api/transcribe', duration: 4}]);
+  assert.deepEqual(r.requests, [{url: '/api/transcribe', duration: 2}]);
   assert.equal(r.text(), 'Part 1.');
   await r.stop();
 });
 
-test('continuous speech keeps eight seconds of context', async () => {
+test('continuous speech is sent every three seconds', async () => {
   const r = await recorder();
-  r.feed(0.1, 4);
+  r.feed(0.1, 2);
   await r.settle();
   assert.equal(r.requests.length, 0);
-  r.feed(0.1, 4);
+  r.feed(0.1, 1);
   await r.settle();
-  assert.equal(r.requests[0].duration, 8);
+  assert.equal(r.requests[0].duration, 3);
   await r.stop();
 });
 
@@ -92,10 +92,10 @@ test('short pauses do not split an early phrase; stopping flushes the remainder 
 
 test('slow requests remain ordered and final audio is not lost', async () => {
   const r = await recorder({holdFirst: true});
-  r.feed(0.1, 3.5);
+  r.feed(0.1, 1.5);
   r.feed(0, 0.5);
   await new Promise(resolve => setImmediate(resolve));
-  r.feed(0.1, 3.5);
+  r.feed(0.1, 1.5);
   r.feed(0, 0.5);
   r.feed(0.1, 1);
   const stopped = r.stop();
@@ -104,8 +104,8 @@ test('slow requests remain ordered and final audio is not lost', async () => {
   await stopped;
   assert.deepEqual(
     r.requests.map(x => x.duration),
-    [4, 4, 1],
+    [2, 2, 1],
   );
-  assert.equal(r.seconds(), 9);
+  assert.equal(r.seconds(), 5);
   assert.equal(r.text(), 'Part 1. Part 2. Part 3.');
 });

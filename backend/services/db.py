@@ -9,7 +9,9 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
-DB_PATH = Path(os.getenv("DATABASE_PATH", str(config.ROOT_DIR / "backend" / "app.db")))
+# On Vercel only /tmp is writable (and it's wiped between cold starts), so default there.
+_DEFAULT_DB = "/tmp/circleback.db" if os.getenv("VERCEL") else str(config.ROOT_DIR / "backend" / "app.db")
+DB_PATH = Path(os.getenv("DATABASE_PATH", _DEFAULT_DB))
 
 
 class NotFoundError(Exception):

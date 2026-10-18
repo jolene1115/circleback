@@ -82,7 +82,12 @@
   background:#1b1d20;border:1px solid var(--r-line);border-radius:10px;padding:24px 26px;color:var(--r-ink);
   font-family:Inter,'Avenir Next','Segoe UI',sans-serif;text-align:left;display:flex;flex-direction:column;gap:20px}
 .answer-feedback svg{width:16px;height:16px;flex:none}
-.mini-body{display:grid;grid-template-columns:minmax(0,1fr) 190px;gap:28px;max-height:46dvh;overflow-y:auto}
+.mini-body{display:grid;grid-template-columns:230px minmax(0,1fr) 190px;gap:28px;max-height:46dvh}
+.mini-body>*{min-height:0;max-height:46dvh;overflow-y:auto}
+.mini-body:not(:has(.mini-side)){grid-template-columns:230px minmax(0,1fr)}
+.mini-transcript{border-right:1px solid var(--r-line);padding-right:24px}
+.mini-transcript h4{margin:0 0 10px;font-size:12px;font-weight:500;color:var(--r-muted)}
+.mini-transcript p{margin:0;font-size:14px;line-height:1.7;color:#cdd3d9;white-space:pre-wrap;overflow-wrap:anywhere}
 .mini-block{margin-bottom:20px}
 .mini-block h3{display:flex;align-items:center;gap:10px;margin:0 0 8px;font-size:13px;font-weight:600}
 .mini-keep{color:var(--r-ink)}
@@ -100,19 +105,15 @@
 .mini-present{color:var(--r-muted)}
 .mini-present svg{color:var(--r-ink)}
 .mini-missing{color:var(--r-amber)}
-.mini-foot{display:flex;justify-content:space-between;align-items:center;gap:12px}
-.mini-toggle{display:inline-flex;align-items:center;gap:6px;padding:0;font:inherit;font-size:13px;color:var(--r-muted);background:none;border:0;cursor:pointer}
-.mini-toggle:hover{color:var(--r-ink)}
-.mini-answer{border-top:1px solid var(--r-line);padding-top:14px;max-height:22dvh;overflow-y:auto}
-.mini-answer h4{margin:0 0 8px;font-size:12px;font-weight:500;color:var(--r-muted)}
-.mini-answer p{margin:0;font-size:14px;line-height:1.7;color:var(--r-ink);white-space:pre-wrap;overflow-wrap:anywhere}
+.mini-foot{display:flex;justify-content:flex-end;align-items:center;gap:12px}
 .mini-continue{display:inline-flex;align-items:center;gap:10px;padding:10px 18px;font:inherit;font-size:14px;color:var(--r-ink);
   background:transparent;border:1px solid var(--r-border);border-radius:6px;cursor:pointer}
 .mini-continue:hover{border-color:var(--r-muted)}
 body.moon-immersive .moon-dialogue .answer-feedback{width:100%}
-body.moon-immersive .moon-dialogue.has-feedback{top:auto;bottom:4dvh;gap:16px}
-@media(max-width:640px){.mini-body{grid-template-columns:1fr}.mini-side{border-left:0;padding-left:0;border-top:1px solid var(--r-line);padding-top:16px}}
-@media(max-height:650px){.mini-body{max-height:34dvh}}
+body.moon-immersive .moon-dialogue.has-feedback{top:auto;bottom:4dvh;gap:16px;width:min(94%,1080px)}
+body.moon-immersive .moon-dialogue .question-stage{margin-inline:auto;text-align:center}
+@media(max-width:860px){.mini-body,.mini-body:not(:has(.mini-side)){grid-template-columns:1fr;gap:18px;overflow-y:auto}.mini-body>*{overflow:visible;max-height:none}.mini-transcript{border-right:0;padding-right:0;border-bottom:1px solid var(--r-line);padding-bottom:16px}.mini-transcript p{max-height:18dvh;overflow-y:auto}.mini-side{border-left:0;padding-left:0;border-top:1px solid var(--r-line);padding-top:16px}}
+@media(max-height:650px){.mini-body,.mini-body>*{max-height:34dvh}}
 
 /* Interviewer's question: keep the word being spoken in view (moon.js moonCaptionThrough). */
 body.moon-immersive .question-stage h2{scrollbar-width:none}

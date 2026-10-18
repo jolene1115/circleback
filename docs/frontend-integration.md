@@ -50,9 +50,10 @@ Keys stay on the server. No key or audio is included in the frontend assets.
 - POST /api/interview/question accepts an optional context body: topic, context,
   focus, tone, history. Calls without a body still work.
 - PCM microphone chunks become WAV multipart uploads to /api/transcribe after
-  four seconds when a half-second quiet interval is detected, at eight seconds
+  two seconds when a half-second quiet interval is detected, at three seconds
   during continuous speech, and at stop. Partial transcripts appear in order.
-  Earlier chunks can increase Gemini request counts and quota usage.
+  Shorter chunks mean more Gemini requests (about 20 per minute of speech),
+  which uses free-tier quota faster.
 - POST /api/interview/feedback receives question, transcript and optional
   interview context/history. Its retry_challenge becomes the next question.
 - Strengths and improvements are saved with each turn and displayed in History.

@@ -1,8 +1,8 @@
 // Live transcription: while recording, send WAV chunks to /api/transcribe in order. A chunk is sent at
-// the first half-second pause after 4 seconds of audio, or after 8 seconds of continuous speech.
+// the first half-second pause after 2 seconds of audio, or after 3 seconds of continuous speech.
 
-const MIN_CHUNK_SEC = 4,
-  MAX_CHUNK_SEC = 8,
+const MIN_CHUNK_SEC = 2,
+  MAX_CHUNK_SEC = 3,
   PAUSE_SEC = 0.5,
   QUIET_RMS = 0.008;
 

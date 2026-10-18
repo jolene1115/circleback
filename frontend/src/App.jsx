@@ -168,30 +168,6 @@ function Character() {
   }
   return (
     <aside className="moon-coach">
-      <button
-        type="button"
-        className="icon-button collection-interviewer"
-        title="Saved interviewers"
-        aria-label="Saved interviewers"
-        onClick={() => {
-          stop();
-          setDialog('collection');
-        }}
-      >
-        <Bookmark />
-      </button>
-      <button
-        type="button"
-        className="icon-button edit-interviewer"
-        title="Draw on interviewer"
-        aria-label="Draw on interviewer"
-        onClick={() => {
-          stop();
-          setDialog('ink');
-        }}
-      >
-        <Pencil />
-      </button>
       <Figure view="setup" />
       <div className="workspace-voice">
         <div className="interviewer-name" hidden={!name}>
@@ -228,6 +204,30 @@ function Character() {
               onClick={preview}
             >
               {playing ? <Square /> : <Volume2 />}
+            </button>
+            <button
+              type="button"
+              className="icon-button edit-interviewer"
+              title="Draw on interviewer"
+              aria-label="Draw on interviewer"
+              onClick={() => {
+                stop();
+                setDialog('ink');
+              }}
+            >
+              <Pencil />
+            </button>
+            <button
+              type="button"
+              className="icon-button collection-interviewer"
+              title="Saved interviewers"
+              aria-label="Saved interviewers"
+              onClick={() => {
+                stop();
+                setDialog('collection');
+              }}
+            >
+              <Bookmark />
             </button>
           </div>
             <p id="voicePreviewStatus" className="field-note" role="status">

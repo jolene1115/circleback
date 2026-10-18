@@ -1,5 +1,5 @@
-import React, {useEffect, useRef, useState} from 'react';
-import {ArrowRight, Check, ChevronDown, ChevronUp, Minus, MoveUpRight} from 'lucide-react';
+import React, {useEffect, useRef} from 'react';
+import {ArrowRight, Check, Minus, MoveUpRight} from 'lucide-react';
 
 const STAR = ['situation', 'task', 'action', 'result'];
 
@@ -22,7 +22,6 @@ function Stat({label, value, unit}) {
  */
 export default function MiniFeedback({feedback, answer, last, onContinue, continueLabel, onFinish}) {
   const button = useRef(null);
-  const [showAnswer, setShowAnswer] = useState(false);
   useEffect(() => button.current?.focus(), []);
   const metrics = feedback.metrics,
     star = feedback.star_check,
@@ -33,6 +32,10 @@ export default function MiniFeedback({feedback, answer, last, onContinue, contin
   return (
     <section className="answer-feedback" aria-live="polite" aria-label="Feedback on your answer">
       <div className="mini-body">
+        <aside className="mini-transcript" aria-label="Your answer">
+          <h4>Your answer</h4>
+          <p>{answer || 'No transcript saved.'}</p>
+        </aside>
         <div className="mini-main">
           <div className="mini-block">
             <h3 className="mini-keep">
@@ -115,23 +118,7 @@ export default function MiniFeedback({feedback, answer, last, onContinue, contin
           </aside>
         )}
       </div>
-      {showAnswer && (
-        <div className="mini-answer" id="mini-answer">
-          <h4>Your answer</h4>
-          <p>{answer || 'No transcript saved.'}</p>
-        </div>
-      )}
       <div className="mini-foot">
-        <button
-          type="button"
-          className="mini-toggle"
-          aria-expanded={showAnswer}
-          aria-controls="mini-answer"
-          onClick={() => setShowAnswer(!showAnswer)}
-        >
-          {showAnswer ? 'Hide your answer' : 'Show your answer'}
-          {showAnswer ? <ChevronUp /> : <ChevronDown />}
-        </button>
         <div className="mini-actions">
           {onFinish && (
             <button type="button" className="mini-continue mini-secondary" onClick={onFinish}>
