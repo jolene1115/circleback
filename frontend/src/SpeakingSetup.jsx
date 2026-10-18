@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {ArrowLeft, ArrowRight, Plus, X} from 'lucide-react';
+import {ArrowLeft, ArrowRight, ChevronDown, Plus, SlidersHorizontal, X} from 'lucide-react';
 
 import {checkHealth} from './engine/api.js';
 import './setup-page.css';
@@ -15,7 +15,7 @@ const TIME_LIMITS = [
 ];
 
 /** Public speaking setup: what the speech is about, key points, optional time limit. */
-export default function SpeakingSetup() {
+export default function SpeakingSetup({Character}) {
   const {speech} = useAppState();
   const [health, setHealth] = useState('checking');
   const [point, setPoint] = useState('');
@@ -108,8 +108,12 @@ export default function SpeakingSetup() {
             </button>
           </div>
         </section>
-        <details className="setup-advanced" open>
-          <summary>Time limit</summary>
+        <section className="setup-character">
+          <h2>Your coach</h2>
+          <Character />
+        </section>
+        <details className="setup-advanced">
+          <summary><SlidersHorizontal size={16} />Session settings<ChevronDown size={16} /></summary>
           <div>
             <label>
               Target length

@@ -8,6 +8,7 @@ import {
   MicVocal,
   Pencil,
   Square,
+  UserRound,
   Volume2,
 } from 'lucide-react';
 
@@ -54,8 +55,8 @@ function Navigation({view}) {
           History
         </button>
       </nav>
-      <button className={'nav-item account-profile-link ' + (view === 'account' ? 'active' : '')} onClick={() => go('account')}>
-        {user ? user.name + ' · Profile' : 'Log in / Sign up'}
+      <button className={'nav-item account-profile-link ' + (view === 'account' ? 'active' : '')} aria-label={user ? 'Your profile' : 'Log in / Sign up'} title={user ? 'Your profile' : 'Log in / Sign up'} onClick={() => go('account')}>
+        <UserRound aria-hidden="true" /><span>{user ? user.name + ' · Profile' : 'Log in / Sign up'}</span>
       </button>
     </aside>
   );
@@ -246,12 +247,13 @@ function Character() {
 }
 
 function History({sessions}) {
+  const {user, syncing, syncError} = useAppState();
   return (
     <>
       <div className="page-head">
         <div>
           <h1>Your conversations.</h1>
-          <p>{sessions.length} saved sessions · Stored in this browser</p>
+          <p>{sessions.length} saved sessions · {user ? (syncError ? 'Saved on this device · Sync pending' : syncing ? 'Syncing your account' : 'Synced to your account') : 'Saved in this browser'}</p>
         </div>
       </div>
       <div className="workspace-history">
@@ -278,9 +280,6 @@ function History({sessions}) {
           <div className="workspace-history-empty">
             <AudioLines />
             <h2>Room for your first conversation.</h2>
-            <button className="text-button" onClick={() => go('setup')}>
-              Start an interview <ArrowRight />
-            </button>
           </div>
         )}
       </div>
@@ -327,7 +326,7 @@ export default function App() {
             <><p className="account-history-notice">{user ? `History for ${user.name}.` : 'Guest history is saved only in this browser.'} <button className="text-button" onClick={() => go('account')}>{user ? 'Manage account / refresh' : 'Log in to sync across devices'}</button></p>{syncError && <p role="alert">{syncError}</p>}<History sessions={sessions} /></>
           )
           ) : (
-            <SpeakingSetup />
+            <SpeakingSetup Character={Character} />
           )}
         </div>
       </main>

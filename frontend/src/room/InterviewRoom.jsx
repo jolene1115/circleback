@@ -396,6 +396,7 @@ export default function InterviewRoom({opening, mode = 'interview'}) {
       setAnswer('');
       answerSeconds.current = 0;
       setFigureState('listening');
+      // Speeches always get feedback after each attempt; interviews follow the setup choice.
       if (speechMode || config.feedbackMode === 'each') {
         setFeedback({data: result, last: !speechMode && nextTurns.length >= Number(config.rounds)});
       } else {
@@ -417,7 +418,7 @@ export default function InterviewRoom({opening, mode = 'interview'}) {
 
   function continueInterview(data, completedTurns) {
     setFeedback(null);
-    if (completedTurns.length >= Number(config.rounds)) {
+    if (!speechMode && completedTurns.length >= Number(config.rounds)) {
       finishSession(completedTurns);
       return;
     }
@@ -536,7 +537,7 @@ export default function InterviewRoom({opening, mode = 'interview'}) {
                   <span className="room-tool-state" aria-hidden="true" />
                 </RoomTool>
                 <span className="room-tools-divider" aria-hidden="true" />
-                <RoomTool label="Exit interview" onClick={() => go('home')}><X /></RoomTool>
+                <RoomTool label={speechMode ? 'Exit practice' : 'Exit interview'} onClick={() => go('home')}><X /></RoomTool>
               </div>
             </div>
             <div className="room-layout">
