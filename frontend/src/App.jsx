@@ -56,7 +56,7 @@ function Navigation({view}) {
         }}
       >
         <AudioLines />
-        <span>cadence</span>
+        <span>CircleBack</span>
       </a>
       <nav aria-label="Main navigation">
         <button className={'nav-item ' + (['home', 'setup'].includes(view) ? 'active' : '')} onClick={() => go('home')}>
@@ -75,7 +75,7 @@ function Home({exploring, setExploring}) {
     <>
       <section className="workspace-intro">
         <div className="workspace-title" hidden={exploring}>
-          <h1>Cadence</h1>
+          <h1>CircleBack</h1>
           <p className="landing-description">
             <strong>Your personal speaking coach.</strong>
             <span>A little practice for your next big conversation.</span>
@@ -163,9 +163,10 @@ function Character() {
     }
     setError('');
     setPlaying(true);
-    setFigureState('speaking');
+    setFigureState('thinking');
     speak({
       text: 'Tell me about a project you are proud of. Take your time.',
+      onstart: () => setFigureState('speaking'),
       onend: () => {
         setPlaying(false);
         setFigureState('listening');
@@ -241,9 +242,9 @@ function Character() {
               {playing ? <Square /> : <Volume2 />}
             </button>
           </div>
-          <p id="voicePreviewStatus" className="field-note" role="status">
-            {error}
-          </p>
+            <p id="voicePreviewStatus" className="field-note" role="status">
+              {error}
+            </p>
         </div>
       </div>
       {dialog === 'ink' && <InkEditor onClose={() => setDialog(null)} />}

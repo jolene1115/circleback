@@ -31,6 +31,7 @@ let state = {
     context: '',
     rounds: '4',
     tone: 'Supportive',
+    feedbackMode: 'summary',
   },
   sessions: loadSessions(),
   selectedSession: null,

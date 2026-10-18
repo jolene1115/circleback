@@ -41,8 +41,8 @@ export default function MiniFeedback({feedback, last, onContinue}) {
           </div>
           {metrics && (
             <div className="mini-stats">
-              <Stat label="Duration" value={Math.round(metrics.durationSec) + 's'} />
-              <Stat label="Average pace" value={metrics.wordsPerMinute} unit="wpm" />
+              <Stat label="Duration" value={metrics.durationSec > 0 ? Math.round(metrics.durationSec) + 's' : 'Not measured'} />
+              <Stat label="Average pace" value={metrics.durationSec > 0 ? metrics.wordsPerMinute : 'Not measured'} unit={metrics.durationSec > 0 ? 'wpm' : undefined} />
               <Stat label="Possible fillers" value={metrics.fillerCount} />
             </div>
           )}
@@ -54,7 +54,7 @@ export default function MiniFeedback({feedback, last, onContinue}) {
               {STAR.map(part => (
                 <li key={part}>
                   <span>{part[0].toUpperCase() + part.slice(1)}</span>
-                  {star[part] ? (
+                  {star[part] === true ? (
                     <span className="mini-present">
                       <Check />
                       Present
@@ -62,7 +62,7 @@ export default function MiniFeedback({feedback, last, onContinue}) {
                   ) : (
                     <span className="mini-missing">
                       <Minus />
-                      Add detail
+                      {star[part] === false ? 'Add detail' : 'Not assessed'}
                     </span>
                   )}
                 </li>

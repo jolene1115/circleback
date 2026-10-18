@@ -28,6 +28,7 @@ export default function SetupPage({Character}){
   <section className="setup-character"><h2>Your interviewer</h2><Character/></section>
   <details className="setup-advanced"><summary><SlidersHorizontal size={16}/>Session settings<ChevronDown size={16}/></summary><div><label>Questions<select value={config.rounds} onChange={e=>update({rounds:e.target.value})}>{[1,4,6,8].map(n=><option key={n} value={String(n)}>{n}</option>)}</select></label><label>Interview style<select value={config.tone} onChange={e=>update({tone:e.target.value})}><option>Supportive</option><option>Direct</option></select></label></div></details>
   <label className="setup-permission"><input type="checkbox" required/><span>Audio and answers are sent to Gemini for transcription and feedback.</span></label>
+  <label className="setup-feedback-choice">Feedback<select aria-label="Feedback timing" value={config.feedbackMode||'summary'} onChange={e=>update({feedbackMode:e.target.value})}><option value="summary">After the interview</option><option value="each">After each answer</option></select></label>
   {health&&!health.keyConfigured&&<p role="alert" className="error">Set up an API key on the server to start.</p>}{error&&<p role="alert" className="error">{error}</p>}
   <footer className="setup-start"><span>{config.rounds} {config.rounds==='1'?'question':'questions'}</span><button className="main-button" type="submit" disabled={busy||!health?.keyConfigured}>{busy?'Preparing...':'Start interview'}<ArrowRight size={18}/></button></footer>
  </form></div>;
