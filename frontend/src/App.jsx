@@ -17,11 +17,13 @@ import InterviewerCollection from './components/InterviewerCollection.jsx';
 import {setFigureState, welcome} from './engine/figure.js';
 import {getInterviewerName, onInterviewerChange} from './engine/ink.js';
 import {currentVoice, onVoicesChange, selectVoice, speak, stopVoice, voiceId, voices} from './engine/voice.js';
+import Account from './Account.jsx';
 import Feedback from './Feedback.jsx';
 import SetupPage from './SetupPage.jsx';
 import SpeakingSetup from './SpeakingSetup.jsx';
 import InterviewRoom from './room/InterviewRoom.jsx';
 import {
+  explorePractice,
   go,
   retryQuestion,
   retrySession,
@@ -30,6 +32,7 @@ import {
 } from './store.js';
 
 function Navigation({view}) {
+  const {user} = useAppState();
   return (
     <aside className="sidebar">
       <a
@@ -51,6 +54,9 @@ function Navigation({view}) {
           History
         </button>
       </nav>
+      <button className={'nav-item account-profile-link ' + (view === 'account' ? 'active' : '')} onClick={() => go('account')}>
+        {user ? user.name + ' · Profile' : 'Log in / Sign up'}
+      </button>
     </aside>
   );
 }
@@ -74,7 +80,7 @@ function Home({exploring, setExploring}) {
             onBlur={() => welcome('leave')}
             onClick={() => {
               welcome('confirm');
-              setTimeout(() => setExploring(true), matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 440);
+              explorePractice();
             }}
           >
             Explore <ArrowRight />
@@ -287,10 +293,10 @@ function History({sessions}) {
 }
 
 export default function App() {
-  const {view, navigation, sessions, selectedSession, interview} = useAppState();
+  const {view, navigation, sessions, selectedSession, interview, user, syncError, syncing, showPracticeChoices} = useAppState();
   const [exploring, setExploring] = useState(false);
-  // Every navigation returns the home page to its landing state.
-  useEffect(() => setExploring(false), [navigation]);
+  // Login opens the mode choices; ordinary home navigation keeps the landing page.
+  useEffect(() => setExploring(Boolean(showPracticeChoices)), [navigation, showPracticeChoices]);
   useLayoutEffect(() => {
     if (view === 'room') return; // the interview room sets its own body classes
     document.body.dataset.theme = 'moon';
@@ -304,12 +310,14 @@ export default function App() {
       <Navigation view={view} />
       <main className="main">
         <div className="content">
-          {view === 'home' ? (
+          {user && syncing && <p role="status" className="account-history-notice">Saving and refreshing account history…</p>}
+          {syncError && view !== 'account' && <p role="alert" className="account-history-notice">{syncError} Your copy is kept on this device. <button className="text-button" onClick={() => go('account')}>Retry from your profile</button></p>}
+          {view === 'account' ? <Account /> : view === 'home' ? (
             <Home exploring={exploring} setExploring={setExploring} />
           ) : view === 'setup' ? (
             <SetupPage Character={Character} />
           ) : view === 'history' ? (
-            <History sessions={sessions} />
+            <><p className="account-history-notice">{user ? `History for ${user.name}.` : 'Guest history is saved only in this browser.'} <button className="text-button" onClick={() => go('account')}>{user ? 'Manage account / refresh' : 'Log in to sync across devices'}</button></p>{syncError && <p role="alert">{syncError}</p>}<History sessions={sessions} /></>
           ) : view === 'summary' ? (
             selectedSession ? (
             <Feedback
@@ -320,7 +328,7 @@ export default function App() {
               onRetry={turn => retryQuestion(selectedSession, turn.q)}
             />
           ) : (
-            <History sessions={sessions} />
+            <><p className="account-history-notice">{user ? `History for ${user.name}.` : 'Guest history is saved only in this browser.'} <button className="text-button" onClick={() => go('account')}>{user ? 'Manage account / refresh' : 'Log in to sync across devices'}</button></p>{syncError && <p role="alert">{syncError}</p>}<History sessions={sessions} /></>
           )
           ) : (
             <SpeakingSetup />

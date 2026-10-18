@@ -158,3 +158,16 @@ Run offline database/API tests (Gemini responses are mocked; no paid API calls):
 ```bash
 .venv/bin/python -m unittest discover -s backend/tests -v
 ```
+
+
+## Website accounts and synced history
+
+Build the React UI (`cd frontend`, `npm install`, `npm run build`), then run the backend
+from the repository root on port 8001. Open http://127.0.0.1:8001 and choose
+**Log in / Sign up**. Signed-in interviews are stored in the shared database;
+Profile lets you explicitly import previous guest interviews and refresh history.
+Guest practice remains available. Login on another device must use the same hosted
+website, not a separate localhost database. HTTPS and persistent server storage are
+required for deployment; set `COOKIE_SECURE=true` for HTTPS. Password recovery and
+email verification are not implemented yet. See [frontend integration](docs/frontend-integration.md)
+for account APIs, deployment details, and tests.

@@ -1,12 +1,13 @@
 """Public speaking mode: the user gives their topic/context and key points, speaks,
 then gets feedback on whether they got their message across. Optionally saved to a practice session."""
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from google.genai import errors
 
 from backend.models import SpeakingFeedbackRequest, SpeakingFeedbackResponse, TimeCheck
 from backend.routers.interview import get_client, model_error
 from backend.services import db
+from backend.routes.accounts import protect_session
 from backend.services.gemini import speaking_feedback
 from backend.services.metrics import compute_metrics
 
@@ -14,8 +15,9 @@ router = APIRouter(prefix="/speaking")
 
 
 @router.post("/feedback", response_model=SpeakingFeedbackResponse)
-def feedback(request: SpeakingFeedbackRequest, client=Depends(get_client)):
+def feedback(request: SpeakingFeedbackRequest, http_request: Request, client=Depends(get_client)):
     if request.sessionId:
+        protect_session(request.sessionId, http_request)
         db.get_session(request.sessionId, "speaking")  # fail fast before spending a Gemini call
 
     # Pace and filler numbers are computed in code from the transcript and the recording length.

@@ -18,12 +18,13 @@ from pathlib import Path
 
 from backend.services.db import init_db, NotFoundError, InvalidDataError
 from backend.routers import interview, sessions, speaking, transcribe
-from backend.routes import users
+from backend.routes import users, accounts
 from backend.config import GEMINI_API_KEY
 
 @asynccontextmanager
 async def lifespan(app):
     init_db()
+    accounts.init_accounts()
     yield
 
 
@@ -83,6 +84,16 @@ for module in (transcribe, interview, speaking, sessions):
     app.include_router(module.router, prefix="/api")
 
 app.include_router(users.router)
+app.include_router(accounts.router)
+
+
+@app.middleware("http")
+async def private_account_responses(request: Request, call_next):
+    response = await call_next(request)
+    if request.url.path.startswith(('/api/account', '/api/sessions', '/api/users')):
+        response.headers['Cache-Control'] = 'no-store'
+    return response
+
 
 frontend = Path(__file__).resolve().parent.parent / "frontend" / "dist"
 if frontend.is_dir():
