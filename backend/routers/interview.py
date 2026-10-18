@@ -5,7 +5,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from google import genai
 from google.genai import errors
 
-from backend.models import InterviewContext, InterviewFeedbackRequest, InterviewFeedbackResponse, QuestionResponse
+from backend.models import (
+    InterviewContext,
+    InterviewFeedbackRequest,
+    InterviewFeedbackResponse,
+    QuestionResponse,
+)
 from backend.services import db
 from backend.services.metrics import compute_metrics
 from backend.test_llm import (
@@ -31,6 +36,8 @@ def get_client():
 def model_error(exc: errors.APIError) -> HTTPException:
     if exc.code == 429:
         return HTTPException(429, "Gemini rate limit reached. Please try again later.")
+    if exc.code == 503:
+        return HTTPException(503, "Gemini is overloaded right now (high demand). Try again in a minute.")
     return HTTPException(502, "Gemini request failed. Please try again later.")
 
 
@@ -57,8 +64,16 @@ def question(request: InterviewContext | None = None, client=Depends(get_client)
 def feedback(request: InterviewFeedbackRequest, client=Depends(get_client)):
     if request.sessionId:
         db.get_session(request.sessionId, "interview")
+
+    # Pace and filler numbers are computed in code from the final transcript, using the recording
+    # length from either `metrics` (terminal scripts) or `durationSec` (frontend).
+    duration = request.metrics.durationSec if request.metrics else (request.durationSec or 0)
+    metrics = compute_metrics(request.transcript, duration) if duration > 0 else None
     try:
-        result = feedback_from_transcription(client, request.question, {"transcript": request.transcript},
+        transcription = {"transcript": request.transcript}
+        if metrics:
+            transcription["metrics"] = metrics.model_dump()  # lets feedback cite real pace/filler numbers
+        result = feedback_from_transcription(client, request.question, transcription,
                                              request.interview.model_dump_json() if request.interview else None)
         validated = InterviewFeedbackResponse.model_validate(result)
     except errors.APIError as exc:
@@ -66,9 +81,9 @@ def feedback(request: InterviewFeedbackRequest, client=Depends(get_client)):
     except (ValueError, TypeError) as exc:
         raise HTTPException(502, "AI returned invalid feedback.") from exc
 
-    metrics = compute_metrics(request.transcript, request.metrics.durationSec if request.metrics else 0)
-    validated.metrics = metrics
+    # Always return metrics (wpm is 0 when the recording length is unknown) and save them with the attempt.
+    validated.metrics = metrics or compute_metrics(request.transcript, 0)
     if request.sessionId:
         db.save_attempt(request.sessionId, request.question, request.transcript,
-                        metrics.model_dump(), validated.model_dump(), mode="interview")
+                        validated.metrics.model_dump(), validated.model_dump(), mode="interview")
     return validated

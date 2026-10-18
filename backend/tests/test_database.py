@@ -8,8 +8,14 @@ from backend.main import app
 from backend.services import db
 from backend.routers import interview, speaking
 
-FB = dict(strength='Clear example', improvement='Add detail', retry_challenge='Explain the outcome')
-SPEAKING_FB = dict(summary='Clear', strengths=['Structure'], improvements=['Slow down'], pointsCovered=[])
+FB = dict(strength='Clear example', improvement='Add detail', example_rewrite='I built [project] for [users].',
+          retry_challenge='Explain the outcome',
+          star_check=dict(situation=True, task=False, action=True, result=False),
+          delivery_tip='Lead with your role, then the outcome.')
+SPEAKING_FB = dict(summary='Clear', strengths=['Structure'], improvements=['Slow down'],
+                   pointsCovered=[dict(point='intro', covered=True, evidence='"Hello everyone"')],
+                   exampleRewrite='Hello everyone, today I will cover [topic].', deliveryTip=None,
+                   nextTry='Add a closing line')
 METRICS = dict(durationSec=30, wordsPerMinute=999, fillerCount=999, fillerWords={})
 
 
@@ -53,8 +59,8 @@ class DatabaseIntegrationTests(unittest.TestCase):
 
     def test_speaking_roundtrip(self):
         session_id = self.session('speaking')
-        import json
-        with patch.object(speaking, 'generate_text', return_value=json.dumps(SPEAKING_FB)):
+        from backend.services.gemini import SpeakingFeedbackOut
+        with patch.object(speaking, 'speaking_feedback', return_value=SpeakingFeedbackOut(**SPEAKING_FB)):
             response = self.client.post('/api/speaking/feedback', json={
                 'sessionId': session_id, 'context': 'Class talk', 'points': ['intro'],
                 'transcript': 'Hello everyone', 'metrics': METRICS})

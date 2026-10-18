@@ -20,10 +20,18 @@ the same origin. Do not open the HTML as a file or use the old port 8793 server.
 For frontend development use `npm run dev` in frontend; Vite proxies /api to
 port 8001. Rebuild and restart FastAPI when first creating frontend/dist.
 
-React owns the landing page, mode selection, setup, history and review. The
-immersive room and drawing dialogs retain the working imperative canvas/audio
-runtime inside an isolated React component. `public/react-bridge.js` is the
-adapter boundary; this is an incremental migration, not a full engine rewrite.
+The whole UI is React. Pages and the interview room are components in `src/`
+(`App.jsx`, `room/InterviewRoom.jsx`, `Review.jsx`, `components/`); shared state
+(view, setup, saved sessions) lives in `src/store.js`. Imperative browser work is
+in plain ES modules under `src/engine/` that the components call:
+
+- `figure.js`: the animated line interviewer (canvas loop, blinking, gestures,
+  pointer gaze, waveform while speaking); `drawing.js` and `ink.js` for shared
+  drawing code and the user's drawings/saved interviewers.
+- `voice.js` (browser speech), `mic.js` (microphone, kept alive between rounds),
+  `transcription.js` (8-second WAV chunks to /api/transcribe), `api.js`, `toast.js`.
+
+Styling is unchanged: the CSS files in `public/` are loaded by `index.html`.
 
 The UI uses local browser English voices. Interviewer drawings, saved characters
 and completed session feedback are kept in this browser's localStorage. They do

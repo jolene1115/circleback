@@ -1,6 +1,7 @@
 import React,{useEffect,useRef,useState} from 'react';
 import {ArrowLeft,ArrowRight,ChevronDown,SlidersHorizontal,Plus,X} from 'lucide-react';
 import './setup-page.css';
+import {configure, getState, go, startInterview} from './store.js';
 
 const groups={Job:['Relevant experience','Problem solving','Collaboration','Motivation'],Internship:['Project experience','Learning','Teamwork','Motivation'],School:['Academic interests','Personal story','Goals','Community'],Custom:['Experience','Communication','Problem solving','Motivation']};
 function recommendations(kind,target){
@@ -9,18 +10,17 @@ function recommendations(kind,target){
  return groups[kind];
 }
 export default function SetupPage({Character}){
- const api=window.cadence;
- const [config,setConfig]=useState(()=>{const c=api.snapshot().config;return {...c,kind:c.kind||'Internship',custom:c.custom||'',focus:c.focus||[],context:c.context||''};});
+ const [config,setConfig]=useState(()=>{const c=getState().config;return {...c,kind:c.kind||'Internship',custom:c.custom||'',focus:c.focus||[],context:c.context||''};});
  const [health,setHealth]=useState(null),[busy,setBusy]=useState(false),[error,setError]=useState(''),[extra,setExtra]=useState('');
  const alive=useRef(true),abort=useRef(null),manual=useRef(false);
  useEffect(()=>{alive.current=true;const controller=new AbortController();fetch('/api/health',{signal:controller.signal}).then(r=>{if(!r.ok)throw Error();return r.json();}).then(data=>{if(alive.current)setHealth(data);}).catch(e=>{if(e.name!=='AbortError'&&alive.current)setError('Server unavailable. Refresh to retry.');});return()=>{alive.current=false;controller.abort();abort.current?.abort();};},[]);
- function update(values){setConfig(old=>{const next={...old,...values};api.configure(next);return next;});}
+ function update(values){setConfig(old=>{const next={...old,...values};configure(next);return next;});}
  function changeTarget(target){const suggested=recommendations(config.kind,target);update({custom:target,...(!manual.current?{focus:suggested.slice(0,3)}:{})});}
  function changeKind(kind){manual.current=false;update({kind,topic:kind==='Custom'?'Interview':kind+' interview',focus:recommendations(kind,config.custom).slice(0,3)});}
  const suggested=recommendations(config.kind,config.custom),choices=[...new Set([...suggested,...config.focus])];
  function addFocus(e){e.preventDefault();const value=extra.trim();if(value&&config.focus.length<10){manual.current=true;update({focus:[...new Set([...config.focus,value])]});setExtra('');}}
- async function start(e){e.preventDefault();if(busy||!health?.keyConfigured)return;setBusy(true);setError('');abort.current=new AbortController();const topic=config.custom.trim()||config.kind+' interview';api.configure({...config,custom:topic,extra:''});try{const response=await fetch('/api/interview/question',{method:'POST',headers:{'Content-Type':'application/json'},signal:abort.current.signal,body:JSON.stringify({topic,context:config.context,focus:config.focus,tone:config.tone,history:[]})});const data=await response.json();if(!response.ok)throw Error(data.error||'Could not prepare your interview.');if(!data.question?.trim())throw Error('No question was returned. Please retry.');if(alive.current)api.start(data.question);}catch(err){if(alive.current&&err.name!=='AbortError')setError(err.message);}finally{if(alive.current)setBusy(false);}}
- return <div className="interview-setup"><header className="setup-new-heading"><button type="button" className="icon-button" aria-label="Back to practice" onClick={()=>api.go('home')}><ArrowLeft/></button><h1>Your next conversation.</h1></header>
+ async function start(e){e.preventDefault();if(busy||!health?.keyConfigured)return;setBusy(true);setError('');abort.current=new AbortController();const topic=config.custom.trim()||config.kind+' interview';configure({...config,custom:topic,extra:''});try{const response=await fetch('/api/interview/question',{method:'POST',headers:{'Content-Type':'application/json'},signal:abort.current.signal,body:JSON.stringify({topic,context:config.context,focus:config.focus,tone:config.tone,history:[]})});const data=await response.json();if(!response.ok)throw Error(data.error||'Could not prepare your interview.');if(!data.question?.trim())throw Error('No question was returned. Please retry.');if(alive.current)startInterview(data.question);}catch(err){if(alive.current&&err.name!=='AbortError')setError(err.message);}finally{if(alive.current)setBusy(false);}}
+ return <div className="interview-setup"><header className="setup-new-heading"><button type="button" className="icon-button" aria-label="Back to practice" onClick={()=>go('home')}><ArrowLeft/></button><h1>Your next conversation.</h1></header>
  <form onSubmit={start} className="setup-new-form">
   <section className="setup-target"><label htmlFor="interview-target">What are you preparing for?</label><div className="setup-kind" role="group" aria-label="Interview type">{Object.keys(groups).map(kind=><button type="button" key={kind} aria-pressed={config.kind===kind} onClick={()=>changeKind(kind)}>{kind}</button>)}</div><input id="interview-target" autoComplete="off" maxLength={160} value={config.custom} placeholder={config.kind==='School'?'Program or school you are applying to':config.kind==='Custom'?'Your interview topic':'e.g. Game design internship at Riot'} onChange={e=>changeTarget(e.target.value)}/></section>
   <section className="setup-background"><label htmlFor="interview-background">Your background <span>Optional</span></label><textarea id="interview-background" maxLength={3000} rows={3} value={config.context} onChange={e=>update({context:e.target.value})} placeholder="A little about your experience, or paste the job description..."/></section>

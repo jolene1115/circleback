@@ -1,6 +1,6 @@
 """Practice session creation and paginated history."""
 from fastapi import APIRouter, Query
-from backend.models import CreateSessionRequest, SessionResponse, SaveAttemptRequest, AttemptResponse, InterviewFeedbackResponse, Feedback
+from backend.models import CreateSessionRequest, SessionResponse, SaveAttemptRequest, AttemptResponse, InterviewFeedbackResponse, SpeakingFeedbackResponse
 from backend.services import db
 from backend.services.metrics import compute_metrics
 
@@ -25,7 +25,7 @@ def get_session(session_id: str):
 @router.post("/{session_id}/attempts", response_model=AttemptResponse)
 def save_attempt(session_id: str, body: SaveAttemptRequest):
     session = db.get_session(session_id)
-    expected = InterviewFeedbackResponse if session['mode'] == 'interview' else Feedback
+    expected = InterviewFeedbackResponse if session['mode'] == 'interview' else SpeakingFeedbackResponse
     if not isinstance(body.feedback, expected):
         raise db.InvalidDataError('Feedback must match the session mode')
     metrics = compute_metrics(body.transcript, body.metrics.durationSec)

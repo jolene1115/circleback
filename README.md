@@ -32,8 +32,8 @@ Open <http://localhost:8000/docs> to try every endpoint in the browser.
 | `GET /api/health` | Checks the server is running; doesn't call Gemini |
 | `POST /api/transcribe` | Audio file → verbatim transcript + metrics (wpm, filler words). See [docs/transcription.md](docs/transcription.md) |
 | `POST /api/interview/question` | Generates an interview question; no request body needed |
-| `POST /api/interview/feedback` | Question + transcript → feedback |
-| `POST /api/speaking/feedback` | Speaking feedback; saves an attempt when `sessionId` is supplied |
+| `POST /api/interview/feedback` | Question + transcript → feedback; saves an attempt when `sessionId` is supplied |
+| `POST /api/speaking/feedback` | Speech context + key points + transcript → feedback, including which points were covered; saves an attempt when `sessionId` is supplied |
 | `POST /api/users`, `GET /api/users/{id}` | Create or retrieve a demo user |
 | `POST /api/sessions` | Create a practice session |
 | `GET /api/sessions?userId=...&limit=20&offset=0` | Paginated user history |
@@ -48,7 +48,35 @@ Open <http://localhost:8000/docs> to try every endpoint in the browser.
   "transcript": "We disagreed about the tech stack. I organized a meeting and helped us choose one. We finished on time."
 }
 ```
-It returns `strength`, `improvement` and `retry_challenge` strings.
+It returns:
+- `strength`, `improvement`: each quotes the words from the answer it refers to
+- `example_rewrite`: one of their sentences, rewritten the way a strong candidate would say it
+- `retry_challenge`: what to do on the next attempt
+- `star_check`: `{situation, task, action, result}` as true/false
+- `delivery_tip`: only when pace or filler words were off (otherwise `null`). Pass `metrics` to get this
+
+The prompt is in `build_feedback_prompt` in `backend/test_llm.py`. Busy-server errors (503) are retried automatically.
+
+`POST /api/speaking/feedback` takes what the user said they'd talk about, plus `/api/transcribe`'s output (`points`, `metrics` and `timeLimitSec` are optional):
+```json
+{
+  "context": "1-minute class presentation on campus recycling for my classmates",
+  "points": ["why recycling matters", "how our campus recycles", "what students can do to help"],
+  "transcript": "Hi everyone. Um, today I'm going to talk about recycling on campus...",
+  "metrics": { "durationSec": 20.8, "wordsPerMinute": 139, "fillerCount": 5, "fillerWords": { "um": 1 } },
+  "timeLimitSec": 60
+}
+```
+It returns:
+- `summary`: one-sentence overall take
+- `pointsCovered`: `[{point, covered, evidence}]`, one per key point, where `evidence` quotes the speech or says what was missing
+- `strengths` (1–2), `improvements` (2–3, most important first)
+- `exampleRewrite`: one sentence rewritten to land better for that audience
+- `deliveryTip`: only when pace, fillers or timing were off (otherwise `null`)
+- `nextTry`: what to focus on in the next attempt
+- `timeCheck`: `{limitSec, durationSec, overBySec}`, computed in code, when a time limit and metrics are sent
+
+The prompt is in `backend/services/prompts.py`.
 
 All errors come back as `{ "error": "..." }`: empty or invalid input returns 422, invalid Gemini responses return 502, and rate limits return 429. Local frontend origins on ports 5173 and 3000 are allowed (CORS). Feedback saves an attempt when a valid `sessionId` is included; omitting it keeps the existing stateless behavior.
 
@@ -63,11 +91,23 @@ With the API running, in a second terminal:
 ```
 The second command lets you talk; it auto-stops when you pause.
 
+**Practice (pick a mode):**
+```bash
+.venv/bin/python scripts/practice.py --threshold 0.05
+```
+It asks whether you want **1. Interview practice** or **2. Public speaking**, then starts that mode with your mic. You can also start each mode directly:
+
 **Full interview practice** (question → answer out loud → transcript → feedback → retry or next):
 ```bash
 .venv/bin/python scripts/interview_mic.py --mic --threshold 0.05
 ```
 Add `--question "Tell me about yourself."` to skip question generation and save Gemini quota.
+
+**Public speaking practice** (describe your topic + key points → give the speech → transcript → feedback → try again):
+```bash
+.venv/bin/python scripts/speech_mic.py --mic --threshold 0.05
+```
+It asks for your topic/context, key points and an optional time limit, then records until you press **Enter**, since pauses are normal in a speech. You can also pass them as flags: `--context "..." --point "..." --point "..." --time-limit 60`.
 
 Test the LLM alone: `.venv/bin/python -m backend.test_llm --sample`
 
@@ -88,7 +128,12 @@ Alternatively, explicitly save an existing result with `POST /api/sessions/{id}/
   "question": "Tell me about yourself.",
   "transcript": "I enjoy building useful software.",
   "metrics": {"durationSec": 30, "wordsPerMinute": 12, "fillerCount": 0, "fillerWords": {}},
-  "feedback": {"strength": "Clear focus", "improvement": "Add an example", "retry_challenge": "Describe a project"}
+  "feedback": {
+    "strength": "Clear focus", "improvement": "Add an example",
+    "example_rewrite": "I enjoy building software that [helps people do X].",
+    "retry_challenge": "Describe a project",
+    "star_check": {"situation": false, "task": false, "action": false, "result": false}
+  }
 }
 ```
 Use automatic saving **or** explicit saving for an answer; using both creates two attempts.

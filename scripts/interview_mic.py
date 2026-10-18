@@ -44,6 +44,7 @@ def record_one_answer(args):
                 listener.on_frame(bytes(FRAME_BYTES))
     finally:
         ffmpeg.kill()
+        ffmpeg.wait()
     return (result["pcm"], result["duration"]) if result else None
 
 
@@ -62,15 +63,23 @@ def practice(question: str, args) -> bool:
     if not body:
         return False
     print_transcript(1, body)
+    if not body["transcript"].strip():
+        say("No words detected, so there's nothing to give feedback on. Try again, closer to the mic.")
+        return False
 
     say("💬 Getting feedback...")
     fb = post("/interview/feedback", json={"question": question, "transcript": body["transcript"], "metrics": body["metrics"], "sessionId": args.session_id})
     if fb:
-        say(
-            f"\n✅ Strength:    {fb['strength']}",
-            f"🔧 Improve:     {fb['improvement']}",
-            f"🔁 Try next:    {fb['retry_challenge']}",
-        )
+        lines = [f"\n✅ Strength:    {fb['strength']}", f"🔧 Improve:     {fb['improvement']}"]
+        if fb.get("example_rewrite"):
+            lines.append(f"✍️  Try saying:  {fb['example_rewrite']}")
+        if star := fb.get("star_check"):
+            star_line = "  ".join(f"{'✓' if star[k] else '✗'} {k.title()}" for k in ("situation", "task", "action", "result"))
+            lines.append(f"⭐ STAR:        {star_line}")
+        if fb.get("delivery_tip"):
+            lines.append(f"🗣  Delivery:    {fb['delivery_tip']}")
+        lines.append(f"🔁 Next try:    {fb['retry_challenge']}")
+        say(*lines)
     return bool(fb)
 
 

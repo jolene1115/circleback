@@ -1,0 +1,114 @@
+/* Session review page (src/Review.jsx). Scoped to .review so nothing else changes. */
+.review{--r-ink:#eeeff1;--r-muted:#a8aaae;--r-faint:#7d8085;--r-line:#2e3033;--r-border:#45484c;--r-amber:#e2b46b;
+  max-width:1120px;margin:0 auto;padding:8px 0 48px;color:var(--r-ink);font-family:Inter,'Avenir Next','Segoe UI',sans-serif}
+.review button{font:inherit;color:inherit;background:transparent;border:0;cursor:pointer}
+.review svg{width:18px;height:18px;flex:none}
+
+.review-back{display:inline-flex;align-items:center;gap:10px;padding:0;color:var(--r-muted)!important;font-size:15px;margin-bottom:44px}
+.review-back:hover{color:var(--r-ink)!important}
+
+.review-head{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:56px}
+.review-meta{display:flex;gap:24px;margin:0 0 14px;font-size:13px;color:var(--r-muted)}
+.review-head h1{margin:0;font-size:42px;line-height:1.15;font-weight:600;letter-spacing:-.02em;color:var(--r-ink)}
+.review-topic{margin:14px 0 0;font-size:16px;color:var(--r-muted)}
+
+.review-outline{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:12px 20px;border:1px solid var(--r-border)!important;border-radius:6px;font-size:15px;white-space:nowrap}
+.review-outline:hover{border-color:var(--r-muted)!important}
+
+.review-tabs{display:flex;gap:28px;border-bottom:1px solid var(--r-line);margin-bottom:40px;overflow-x:auto}
+.review-tabs button{position:relative;display:inline-flex;align-items:center;gap:10px;padding:0 0 14px;font-size:15px;color:var(--r-muted)!important;white-space:nowrap}
+.review-tabs button.active{color:var(--r-ink)!important}
+.review-tabs button.active::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--r-ink)}
+.review-dot{width:4px;height:4px;border-radius:50%;background:currentColor}
+
+.review-question{display:flex;gap:18px;align-items:flex-start;margin-bottom:44px}
+.review-question svg{color:var(--r-muted);margin-top:6px}
+.review-question h2{margin:0;max-width:780px;font-size:24px;line-height:1.5;font-weight:500;color:var(--r-ink)}
+
+.review-body{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:48px}
+.review-main{min-width:0}
+.review-block{margin-bottom:36px}
+.review-block h3{display:flex;align-items:center;gap:12px;margin:0 0 16px;font-size:14px;font-weight:600}
+.review-keep{color:var(--r-ink)}
+.review-next{color:var(--r-amber)}
+.review-block p,.review-answer p{margin:0;font-size:16px;line-height:1.75;color:var(--r-ink)}
+.review-empty{margin:0 0 36px;color:var(--r-muted);font-size:15px}
+
+.review-delivery{border-top:1px solid var(--r-line);padding-top:36px;margin-bottom:36px}
+.review-delivery-title{display:flex;align-items:center;gap:12px;margin:0 0 28px;font-size:17px;font-weight:500}
+.review-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-bottom:32px}
+.review-stats small{display:block;font-size:13px;color:var(--r-muted);margin-bottom:8px}
+.review-stats strong{font-size:28px;font-weight:400;color:var(--r-ink)}
+.review-stats strong span{font-size:13px;margin-left:8px}
+.review-detail{margin-bottom:28px}
+.review-detail h4{margin:0 0 10px;font-size:15px;font-weight:600;color:var(--r-ink)}
+.review-detail p{margin:0 0 8px;font-size:15px;line-height:1.7;color:var(--r-ink)}
+.review-detail small,.review-disclaimer{display:block;font-size:12.5px;line-height:1.6;color:var(--r-muted)}
+.review-disclaimer{margin-top:36px}
+
+.review-answer{border-top:1px solid var(--r-line);border-bottom:1px solid var(--r-line);padding:22px 0}
+.review-answer-toggle{display:flex;width:100%;justify-content:space-between;align-items:center;padding:0;font-size:15px;color:var(--r-muted)!important}
+.review-answer p{margin-top:24px;font-size:15px}
+
+.review-side{border-left:1px solid var(--r-line);padding-left:40px;display:flex;flex-direction:column;gap:40px}
+.review-side section{display:flex;flex-direction:column}
+.review-side-title{margin:0 0 20px;font-size:13px;font-weight:500;color:var(--r-muted)}
+.review-star{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:22px}
+.review-star li{display:flex;justify-content:space-between;align-items:center;font-size:15px}
+.review-present,.review-missing{display:inline-flex;align-items:center;gap:8px;font-size:13px}
+.review-present{color:var(--r-muted)}
+.review-present svg{color:var(--r-ink)}
+.review-missing{color:var(--r-amber)}
+.review-try{margin:0;font-size:15px;line-height:1.7;color:var(--r-ink)}
+.review-retry{width:100%;margin-top:-4px}
+
+.review-pager{display:flex;justify-content:space-between;align-items:center;margin-top:40px;padding-top:28px;border-top:1px solid var(--r-line);font-size:13px;color:var(--r-muted)}
+.review-pager div{display:flex;gap:10px}
+.review-pager button{width:42px;height:42px;border-radius:50%!important;border:1px solid var(--r-line)!important;display:grid;place-items:center}
+.review-pager button:disabled{opacity:.4;cursor:default}
+
+@media(max-width:900px){
+  .review-head{flex-direction:column}
+  .review-head h1{font-size:34px}
+  .review-question h2{font-size:20px}
+  .review-body{grid-template-columns:1fr;gap:36px}
+  .review-side{border-left:0;padding-left:0;border-top:1px solid var(--r-line);padding-top:32px}
+  .review-stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+  .review-stats strong{font-size:22px}
+}
+
+/* Mini feedback after each answer (team-api.js showFeedback): same look as the review page, condensed. */
+.answer-feedback{--r-ink:#eeeff1;--r-muted:#a8aaae;--r-line:#2e3033;--r-border:#45484c;--r-amber:#e2b46b;
+  background:#1b1d20;border:1px solid var(--r-line);border-radius:10px;padding:24px 26px;color:var(--r-ink);
+  font-family:Inter,'Avenir Next','Segoe UI',sans-serif;text-align:left;display:flex;flex-direction:column;gap:20px}
+.answer-feedback svg{width:16px;height:16px;flex:none}
+.mini-body{display:grid;grid-template-columns:minmax(0,1fr) 190px;gap:28px;max-height:46dvh;overflow-y:auto}
+.mini-block{margin-bottom:20px}
+.mini-block h3{display:flex;align-items:center;gap:10px;margin:0 0 8px;font-size:13px;font-weight:600}
+.mini-keep{color:var(--r-ink)}
+.mini-next{color:var(--r-amber)}
+.mini-block p{margin:0;font-size:15px;line-height:1.65;color:var(--r-ink)}
+.mini-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;border-top:1px solid var(--r-line);padding-top:18px}
+.mini-stats small{display:block;font-size:12px;color:var(--r-muted);margin-bottom:4px}
+.mini-stats strong{font-size:22px;font-weight:400}
+.mini-stats strong span{font-size:12px;margin-left:6px}
+.mini-side{border-left:1px solid var(--r-line);padding-left:24px}
+.mini-side h4{margin:0 0 14px;font-size:12px;font-weight:500;color:var(--r-muted)}
+.mini-side ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px}
+.mini-side li{display:flex;justify-content:space-between;align-items:center;font-size:14px}
+.mini-present,.mini-missing{display:inline-flex;align-items:center;gap:6px;font-size:12px}
+.mini-present{color:var(--r-muted)}
+.mini-present svg{color:var(--r-ink)}
+.mini-missing{color:var(--r-amber)}
+.mini-foot{display:flex;justify-content:flex-end}
+.mini-continue{display:inline-flex;align-items:center;gap:10px;padding:10px 18px;font:inherit;font-size:14px;color:var(--r-ink);
+  background:transparent;border:1px solid var(--r-border);border-radius:6px;cursor:pointer}
+.mini-continue:hover{border-color:var(--r-muted)}
+body.moon-immersive .moon-dialogue .answer-feedback{width:100%}
+body.moon-immersive .moon-dialogue.has-feedback{top:auto;bottom:4dvh;gap:16px}
+@media(max-width:640px){.mini-body{grid-template-columns:1fr}.mini-side{border-left:0;padding-left:0;border-top:1px solid var(--r-line);padding-top:16px}}
+@media(max-height:650px){.mini-body{max-height:34dvh}}
+
+/* Interviewer's question: keep the word being spoken in view (moon.js moonCaptionThrough). */
+body.moon-immersive .question-stage h2{scrollbar-width:none}
+body.moon-immersive .question-stage h2::-webkit-scrollbar{display:none}
