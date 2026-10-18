@@ -18,7 +18,7 @@ class UIIntegrationTests(unittest.TestCase):
     def test_frontend_and_health(self):
         self.assertTrue(self.client.get('/api/health').json()['ok'])
         self.assertIn('type="module"', self.client.get('/').text)
-        self.assertEqual(self.client.get('/team-api.js').status_code, 200)
+        self.assertEqual(self.client.get('/review.css').status_code, 200)
 
     @patch('backend.routers.interview.generate_text', return_value='{"question":"Tell me about your portfolio."}')
     def test_context_and_legacy_question(self, generate):

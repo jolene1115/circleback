@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {ArrowLeft, ArrowRight, AudioLines, Check, ChevronDown, ChevronUp, MessageCircle, Minus, MoveUpRight, RotateCw} from 'lucide-react';
 
-const api = () => window.cadence;
+import {go, retryQuestion, retrySession} from './store.js';
 const STAR = ['situation', 'task', 'action', 'result'];
 const PACE_RANGE = [110, 170]; // English practice guide, not a score
 const MIN_PACE_SECONDS = 15; // shorter answers are too short to judge pace
@@ -63,7 +63,7 @@ export default function Review({session}) {
 
   return (
     <div className="review">
-      <button className="review-back" onClick={() => api().go('history')}><ArrowLeft />History</button>
+      <button className="review-back" onClick={() => go('history')}><ArrowLeft />History</button>
 
       <header className="review-head">
         <div>
@@ -71,7 +71,7 @@ export default function Review({session}) {
           <h1>Your next step.</h1>
           <p className="review-topic">{session.topic}</p>
         </div>
-        <button className="review-outline" onClick={() => api().retry(session)}><RotateCw />Practice again</button>
+        <button className="review-outline" onClick={() => retrySession(session)}><RotateCw />Practice again</button>
       </header>
 
       <div className="review-tabs" role="tablist" aria-label="Answers">
@@ -129,7 +129,7 @@ export default function Review({session}) {
               <p className="review-try">{feedback.retry_challenge}</p>
             </section>
           )}
-          <button className="review-outline review-retry" onClick={() => api().retryQuestion(session, turn.q)}>
+          <button className="review-outline review-retry" onClick={() => retryQuestion(session, turn.q)}>
             <RotateCw />Retry this question
           </button>
         </aside>
