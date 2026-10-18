@@ -2,7 +2,7 @@
 
 from typing import Annotated, Optional, Literal, Any
 
-from pydantic import BaseModel, StringConstraints, Field, ConfigDict
+from pydantic import BaseModel, StringConstraints, Field, ConfigDict, model_validator
 
 NonEmptyText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 
@@ -47,12 +47,24 @@ class QuestionResponse(BaseModel):
     question: NonEmptyText
 
 
+class ResumeResponse(BaseModel):
+    resumeText: NonEmptyText
+
+
 class InterviewContext(BaseModel):
+    type: Literal["behavioral", "resume"] = "behavioral"
+    resumeText: Optional[Annotated[str, StringConstraints(strip_whitespace=True, max_length=20000)]] = None
     topic: str = Field(default="Software internship", max_length=160)
     context: str = Field(default="", max_length=3000)
     focus: list[str] = Field(default_factory=list, max_length=20)
     tone: str = Field(default="Supportive", max_length=80)
-    history: list[dict[str, str]] = Field(default_factory=list, max_length=8)
+    history: list[dict[str, str]] = Field(default_factory=list, max_length=10)
+
+    @model_validator(mode="after")
+    def require_resume(self):
+        if self.type == "resume" and not self.resumeText:
+            raise ValueError("Upload a resume or paste resume text for a resume deep dive.")
+        return self
 
 
 # POST /api/interview/feedback

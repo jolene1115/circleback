@@ -354,7 +354,7 @@ export default function InterviewRoom({opening}) {
       const result = await request('interview/feedback', {
         question: live.current.question,
         transcript: spoken,
-        interview: {topic: currentTopic(config), context: config.context, focus: focusList(config), tone: config.tone, history},
+        interview: {type: config.type || 'behavioral', resumeText: config.type === 'resume' ? config.resumeText : undefined, topic: currentTopic(config), context: config.context, focus: focusList(config), tone: config.tone, history},
         durationSec: answerSeconds.current || undefined,
       });
       if (!mounted.current) return;

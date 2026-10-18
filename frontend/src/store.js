@@ -24,12 +24,14 @@ function loadSessions() {
 let state = {
   view: 'home',
   config: {
+    type: 'behavioral',
+    resumeText: '',
     topic: 'Design internship',
     custom: '',
     focus: ['Project experience', 'Teamwork'],
     extra: '',
     context: '',
-    rounds: '4',
+    rounds: '3',
     tone: 'Supportive',
   },
   sessions: loadSessions(),
@@ -63,6 +65,7 @@ export const focusList = (config = state.config) => [...config.focus, ...(config
 
 export function go(view) {
   // `navigation` changes on every go(), even to the same view (e.g. the home page resets to its landing state).
+  if (view === 'home') state = {...state, config: {...state.config, type: 'behavioral', resumeText: ''}};
   update({view, navigation: (state.navigation || 0) + 1});
   window.scrollTo({top: 0, behavior: 'instant'});
 }
@@ -84,6 +87,8 @@ export function selectSession(session) {
 
 function useSessionConfig(session) {
   configure({
+    type: 'behavioral',
+    resumeText: '',
     custom: session.topic,
     context: session.context || '',
     focus: session.focus || [],
