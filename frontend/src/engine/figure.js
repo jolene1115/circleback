@@ -207,6 +207,8 @@ function drawBackground(c, t, dt) {
   if (scene.view === 'setup') return;
   const quiet = scene.view === 'room',
     glow = quiet ? 0 : light;
+  const ambience = reducedMotion.matches ? null : window.cadenceAmbience;
+  const music = ambience?.energy || 0, musicPhase = ambience?.phase || 0;
   if (analyser && analyserActive()) {
     analyser.getFloatTimeDomainData(samples);
     let sum = 0;
@@ -218,7 +220,7 @@ function drawBackground(c, t, dt) {
   warm += (target - warm) * (1 - Math.exp(-dt * 2));
   wordPulse *= Math.exp(-dt * 3);
   light += ((state === 'speaking' ? 0.5 + wordPulse * 0.5 : 0) - light) * (1 - Math.exp(-dt * 2));
-  if (t - curtainTime > 0.06) {
+  if (t - curtainTime > 0.06 || reducedMotion.matches) {
     curtainTime = t;
     const pixels = curtainPixels.data;
     for (let y = 0; y < 70; y++)
@@ -226,11 +228,12 @@ function drawBackground(c, t, dt) {
         const u = x / 139,
           v = y / 69;
         const edge = Math.pow(Math.abs(u - 0.5) * 2, 1.8);
-        const sweep = 0.5 + 0.5 * Math.sin(quiet ? u * 3.2 + v * 4.1 - t * 0.14 : u * 4.2 + v * 3.1 - t * 0.32);
-        const fold = 0.5 + 0.5 * Math.sin(quiet ? v * 4 - u * 2 + t * 0.11 : v * 5 - u * 3 + t * 0.24);
+        const sweep = 0.5 + 0.5 * Math.sin((quiet ? u * 3.2 + v * 4.1 - t * 0.14 : u * 4.2 + v * 3.1 - t * 0.22) + musicPhase);
+        const fold = 0.5 + 0.5 * Math.sin((quiet ? v * 4 - u * 2 + t * 0.11 : v * 5 - u * 3 + t * 0.18) - musicPhase * 0.6);
         const blue = quiet
           ? edge * (0.24 + 0.5 * sweep) + 0.08 * fold
           : edge * (0.2 + 0.5 * sweep) + 0.17 * fold + glow * 0.22 * sweep;
+        const silver = music * (0.25 + 0.75 * Math.sin(u * 4 - v * 2.5 + musicPhase) ** 2) * 0.45;
         const warmth =
           warm *
           (quiet
@@ -238,9 +241,9 @@ function drawBackground(c, t, dt) {
             : (0.3 + 0.7 * Math.sin(u * 2 + v * 3 - t * 0.35) ** 2) * (0.3 + 0.65 * fold));
         const grain = (Math.sin(x * 127.1 + y * 311.7) * 43758.5453) % 1;
         const i = (y * 140 + x) * 4;
-        pixels[i] = 14 + blue * 13 + warmth * 150 + glow * 18 * fold + grain * 1.5;
-        pixels[i + 1] = 18 + blue * 45 + warmth * 82 + glow * 22 * fold + grain * 1.5;
-        pixels[i + 2] = 25 + blue * 91 + warmth * 25 + grain * 1.5;
+        pixels[i] = 14 + blue * 13 + warmth * 150 + silver * 35 + glow * 18 * fold + grain * 1.5;
+        pixels[i + 1] = 18 + blue * 45 + warmth * 82 + silver * 48 + glow * 22 * fold + grain * 1.5;
+        pixels[i + 2] = 25 + blue * 91 + warmth * 25 + silver * 60 + grain * 1.5;
         pixels[i + 3] = 255;
       }
     curtainCtx.putImageData(curtainPixels, 0, 0);

@@ -1,5 +1,6 @@
 import React, {useCallback, useEffect, useLayoutEffect, useRef, useState} from 'react';
-import {ArrowUp, AudioLines, ChevronRight, Ellipsis, LoaderCircle, Mic, Square, Volume2, X} from 'lucide-react';
+import {ArrowUp, AudioLines, ChevronRight, LoaderCircle, Mic, MicOff, RotateCcw, Square, Volume2, VolumeX, X} from 'lucide-react';
+import './room-controls.css';
 
 import {request} from '../engine/api.js';
 import {
@@ -39,6 +40,12 @@ function useFigureState() {
 /** Speech practice shows (and speaks) this prompt instead of an interview question. */
 const speechPrompt = topic => `Whenever you're ready, give your speech: ${topic}`;
 
+function RoomTool({label, hint = label, children, ...props}) {
+  return <button type="button" className="room-tool" aria-label={label} {...props}>
+    {children}<span className="room-tool-tip" aria-hidden="true">{hint}</span>
+  </button>;
+}
+
 /** The practice room. mode 'interview': answer AI questions; 'speaking': rehearse a speech, try again. */
 export default function InterviewRoom({opening, mode = 'interview'}) {
   const {config, speech: speechSetup} = useAppState();
@@ -62,8 +69,7 @@ export default function InterviewRoom({opening, mode = 'interview'}) {
 
   const canvas = useRef(null),
     caption = useRef(null),
-    liveAnswer = useRef(null),
-    menu = useRef(null);
+    liveAnswer = useRef(null);
   // Values read inside async callbacks and timers.
   const live = useRef({});
   Object.assign(live.current, {question, turns, answer, autoRecord, utterance, mic, feedback});
@@ -115,7 +121,7 @@ export default function InterviewRoom({opening, mode = 'interview'}) {
       return;
     }
     if (!recordingSupported()) {
-      toast('Recording is unavailable in this browser. You can type your answer.');
+      toast('Recording is unavailable in this browser. Please use a browser with microphone support.');
       return;
     }
     startingMic.current = true;
@@ -152,7 +158,7 @@ export default function InterviewRoom({opening, mode = 'interview'}) {
       if (generation === micGeneration.current) {
         setMic('idle');
         setMicStatus('Microphone unavailable');
-        toast('Microphone access failed. You can still type your answer.');
+        toast('Microphone access failed. Allow microphone access in your browser and retry.');
       }
     } finally {
       startingMic.current = false;
@@ -189,7 +195,9 @@ export default function InterviewRoom({opening, mode = 'interview'}) {
         onText: (text, seconds) => {
           answerSeconds.current += seconds;
           if (!text || !mounted.current) return;
-          setAnswer(prev => (prev.trim() + ' ' + text).trim().slice(0, 5000));
+          const next = (live.current.answer.trim() + ' ' + text).trim().slice(0, 5000);
+          live.current.answer = next;
+          setAnswer(next);
           setError('');
         },
         onFailure: () => {
@@ -388,7 +396,12 @@ export default function InterviewRoom({opening, mode = 'interview'}) {
       setAnswer('');
       answerSeconds.current = 0;
       setFigureState('listening');
-      setFeedback({data: result, last: !speechMode && nextTurns.length >= Number(config.rounds)});
+      // Speeches always get feedback after each attempt; interviews follow the setup choice.
+      if (speechMode || config.feedbackMode === 'each') {
+        setFeedback({data: result, last: !speechMode && nextTurns.length >= Number(config.rounds)});
+      } else {
+        continueInterview(result, nextTurns);
+      }
     } catch (err) {
       if (mounted.current) {
         setError(err.message);
@@ -400,10 +413,13 @@ export default function InterviewRoom({opening, mode = 'interview'}) {
   }
 
   function nextQuestion() {
-    const {data, last} = feedback;
+    continueInterview(feedback.data, turns);
+  }
+
+  function continueInterview(data, completedTurns) {
     setFeedback(null);
-    if (last) {
-      finishSession(turns);
+    if (!speechMode && completedTurns.length >= Number(config.rounds)) {
+      finishSession(completedTurns);
       return;
     }
     if (!speechMode) setQuestion(data.retry_challenge);
@@ -413,31 +429,13 @@ export default function InterviewRoom({opening, mode = 'interview'}) {
     setAudioURL(null);
   }
 
-  function finish() {
-    if (!turns.length) {
-      toast(speechMode ? 'Give your speech at least once before finishing.' : 'Answer at least one question before finishing.');
-      return;
-    }
-    finishSession(turns);
-  }
-
   function toggleAutoSpeak() {
     const next = !autoSpeak;
     autoSpeakPreference = next;
     setAutoSpeak(next);
+    if (recorder.current?.state === 'recording' || startingMic.current) return;
     stopSpeech();
     if (next) speakQuestion();
-  }
-
-  function closeMenuOnButton(e) {
-    if (e.target.closest('button')) menu.current.open = false;
-  }
-
-  function closeMenuOnEscape(e) {
-    if (e.key === 'Escape') {
-      menu.current.open = false;
-      menu.current.querySelector('summary').focus();
-    }
   }
 
   // --- Main button ---------------------------------------------------------------------------
@@ -493,7 +491,7 @@ export default function InterviewRoom({opening, mode = 'interview'}) {
             }}
           >
             <AudioLines />
-            <span>circleback</span>
+            <span>CircleBack</span>
           </a>
           <nav aria-label="Main navigation">
             <button className="nav-item " data-go="home" onClick={() => go('home')}>
@@ -518,54 +516,23 @@ export default function InterviewRoom({opening, mode = 'interview'}) {
                 <h1>{speechMode ? speechSetup.context : currentTopic(config)}</h1>
                 <p>{speechMode ? 'Rehearse, get feedback, try again.' : 'One conversation. One question at a time.'}</p>
               </div>
-              <div className="moon-session-controls">
-                <details className="moon-menu" ref={menu} onKeyDown={closeMenuOnEscape}>
-                  <summary title="Interview options" aria-label="Interview options">
-                    <Ellipsis />
-                  </summary>
-                  <div className="moon-menu-items" onClick={closeMenuOnButton}>
-                    <button
-                      type="button"
-                      id="moonMute"
-                      className="icon-button"
-                      title={muteLabel}
-                      aria-label={muteLabel}
-                      aria-pressed={String(!autoSpeak)}
-                      onClick={toggleAutoSpeak}
-                    >
-                      {muteLabel}
-                    </button>
-                    <button className="icon-button" id="listen" aria-label="Replay question" title="Replay question" onClick={speakQuestion}>
-                      Replay question
-                    </button>
-                    <label title="Auto-record after question">
-                      <input
-                        id="moonAutoRecord"
-                        type="checkbox"
-                        checked={autoRecord}
-                        onChange={e => {
-                          autoRecordPreference = e.target.checked;
-                          setAutoRecord(e.target.checked);
-                          if (!e.target.checked) clearTimer('record');
-                        }}
-                      />{' '}
-                      Auto-record after question
-                    </label>
-                    <button className="secondary-button" id="finish" title="Finish session" aria-label="Finish session" onClick={finish}>
-                      Finish session
-                    </button>
-                  </div>
-                </details>
-                <button
-                  type="button"
-                  className="secondary-button"
-                  id="moonLeave"
-                  title="Exit interview"
-                  aria-label="Exit interview"
-                  onClick={() => go('home')}
-                >
-                  <X />
-                </button>
+              <div className="moon-session-controls room-tools" role="group" aria-label="Interview controls">
+                <RoomTool label={muteLabel} aria-pressed={autoSpeak} disabled={submitting || !!feedback} onClick={toggleAutoSpeak}>
+                  {autoSpeak ? <Volume2 /> : <VolumeX />}
+                </RoomTool>
+                <RoomTool label={speaking ? 'Stop question audio' : speechMode ? 'Replay prompt' : 'Replay question'} disabled={submitting || isRecording || starting || !!feedback} onClick={speakQuestion}>
+                  {speaking ? <Square /> : <RotateCcw />}
+                </RoomTool>
+                <RoomTool label="Auto-record after question" hint={'Auto-record: ' + (autoRecord ? 'on' : 'off')} role="switch" aria-checked={autoRecord} onClick={() => {
+                  autoRecordPreference = !autoRecord;
+                  setAutoRecord(!autoRecord);
+                  if (autoRecord) clearTimer('record');
+                }}>
+                  {autoRecord ? <Mic /> : <MicOff />}
+                  <span className="room-tool-state" aria-hidden="true" />
+                </RoomTool>
+                <span className="room-tools-divider" aria-hidden="true" />
+                <RoomTool label={speechMode ? 'Exit practice' : 'Exit interview'} onClick={() => go('home')}><X /></RoomTool>
               </div>
             </div>
             <div className="room-layout">
@@ -638,7 +605,7 @@ export default function InterviewRoom({opening, mode = 'interview'}) {
                         id="answer"
                         maxLength={5000}
                         placeholder="Type your reply..."
-                        aria-label="Your reply. Voice transcription is not connected."
+                        aria-label="Your transcribed reply"
                         hidden
                         aria-hidden="true"
                         tabIndex={-1}

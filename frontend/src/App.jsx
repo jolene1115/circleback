@@ -41,7 +41,7 @@ function Navigation({view}) {
         }}
       >
         <AudioLines />
-        <span>circleback</span>
+        <span>CircleBack</span>
       </a>
       <nav aria-label="Main navigation">
         <button className={'nav-item ' + (['home', 'setup', 'speaking'].includes(view) ? 'active' : '')} onClick={() => go('home')}>
@@ -148,9 +148,10 @@ function Character() {
     }
     setError('');
     setPlaying(true);
-    setFigureState('speaking');
+    setFigureState('thinking');
     speak({
       text: 'Tell me about a project you are proud of. Take your time.',
+      onstart: () => setFigureState('speaking'),
       onend: () => {
         setPlaying(false);
         setFigureState('listening');
@@ -226,9 +227,9 @@ function Character() {
               {playing ? <Square /> : <Volume2 />}
             </button>
           </div>
-          <p id="voicePreviewStatus" className="field-note" role="status">
-            {error}
-          </p>
+            <p id="voicePreviewStatus" className="field-note" role="status">
+              {error}
+            </p>
         </div>
       </div>
       {dialog === 'ink' && <InkEditor onClose={() => setDialog(null)} />}
