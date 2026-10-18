@@ -5,3 +5,5 @@ google-genai==2.31.0       # Gemini SDK
 python-dotenv==1.2.4       # reads .env
 httpx==0.28.1              # used by scripts/ to call the API
 pydantic
+
+pypdf>=6,<7

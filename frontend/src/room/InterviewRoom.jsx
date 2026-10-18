@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useLayoutEffect, useRef, useState} from 'react';
-import {ArrowUp, AudioLines, ChevronRight, LoaderCircle, Mic, MicOff, RotateCcw, Square, Volume2, VolumeX, X} from 'lucide-react';
+import {ArrowUp, AudioLines, ChevronRight, LoaderCircle, Mic, MicOff, Square, Volume2, VolumeX, X} from 'lucide-react';
 import './room-controls.css';
 
 import {request} from '../engine/api.js';
@@ -39,12 +39,12 @@ function useFigureState() {
 
 /** Speech practice shows (and speaks) this prompt instead of an interview question. */
 const speechPrompt = topic => `Whenever you're ready, give your speech: ${topic}`;
-
 function RoomTool({label, hint = label, children, ...props}) {
   return <button type="button" className="room-tool" aria-label={label} {...props}>
     {children}<span className="room-tool-tip" aria-hidden="true">{hint}</span>
   </button>;
 }
+
 
 /** The practice room. mode 'interview': answer AI questions; 'speaking': rehearse a speech, try again. */
 export default function InterviewRoom({opening, mode = 'interview'}) {
@@ -381,7 +381,7 @@ export default function InterviewRoom({opening, mode = 'interview'}) {
         result = await request('interview/feedback', {
           question: live.current.question,
           transcript: spoken,
-          interview: {topic: currentTopic(config), context: config.context, focus: focusList(config), tone: config.tone, history},
+          interview: {type: config.type || 'behavioral', resumeText: config.type === 'resume' ? config.resumeText : undefined, topic: currentTopic(config), context: config.context, focus: focusList(config), tone: config.tone, history},
           durationSec,
         });
         if (!mounted.current) return;
@@ -427,6 +427,14 @@ export default function InterviewRoom({opening, mode = 'interview'}) {
     setMicStatus('Optional voice recording');
     setError('');
     setAudioURL(null);
+  }
+
+  function finish() {
+    if (!turns.length) {
+      toast(speechMode ? 'Give your speech at least once before finishing.' : 'Answer at least one question before finishing.');
+      return;
+    }
+    finishSession(turns);
   }
 
   function toggleAutoSpeak() {
@@ -520,9 +528,6 @@ export default function InterviewRoom({opening, mode = 'interview'}) {
                 <RoomTool label={muteLabel} aria-pressed={autoSpeak} disabled={submitting || !!feedback} onClick={toggleAutoSpeak}>
                   {autoSpeak ? <Volume2 /> : <VolumeX />}
                 </RoomTool>
-                <RoomTool label={speaking ? 'Stop question audio' : speechMode ? 'Replay prompt' : 'Replay question'} disabled={submitting || isRecording || starting || !!feedback} onClick={speakQuestion}>
-                  {speaking ? <Square /> : <RotateCcw />}
-                </RoomTool>
                 <RoomTool label="Auto-record after question" hint={'Auto-record: ' + (autoRecord ? 'on' : 'off')} role="switch" aria-checked={autoRecord} onClick={() => {
                   autoRecordPreference = !autoRecord;
                   setAutoRecord(!autoRecord);
@@ -574,6 +579,7 @@ export default function InterviewRoom({opening, mode = 'interview'}) {
                       Alex <span className="muted">/ {config.tone}</span>
                     </div>
                     <h2 ref={caption} aria-label={question}>
+                      <button type="button" className="question-replay" aria-label={speaking ? 'Stop question audio' : speechMode ? 'Replay prompt' : 'Replay question'} title={speaking ? 'Stop question audio' : speechMode ? 'Replay prompt' : 'Replay question'} disabled={submitting || isRecording || starting || !!feedback} onClick={speakQuestion}>
                       {words.map(match => (
                         <span
                           key={match.index}
@@ -584,6 +590,7 @@ export default function InterviewRoom({opening, mode = 'interview'}) {
                           {match[0] + ' '}
                         </span>
                       ))}
+                      </button>
                     </h2>
                   </div>
                   <form id="answerForm" onSubmit={submit} style={feedback ? {display: 'none'} : undefined}>

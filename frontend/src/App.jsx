@@ -8,6 +8,7 @@ import {
   MicVocal,
   Pencil,
   Square,
+  UserRound,
   Volume2,
 } from 'lucide-react';
 
@@ -17,11 +18,13 @@ import InterviewerCollection from './components/InterviewerCollection.jsx';
 import {setFigureState, welcome} from './engine/figure.js';
 import {getInterviewerName, onInterviewerChange} from './engine/ink.js';
 import {currentVoice, onVoicesChange, selectVoice, speak, stopVoice, voiceId, voices} from './engine/voice.js';
+import Account from './Account.jsx';
 import Feedback from './Feedback.jsx';
 import SetupPage from './SetupPage.jsx';
 import SpeakingSetup from './SpeakingSetup.jsx';
 import InterviewRoom from './room/InterviewRoom.jsx';
 import {
+  explorePractice,
   go,
   retryQuestion,
   retrySession,
@@ -30,6 +33,7 @@ import {
 } from './store.js';
 
 function Navigation({view}) {
+  const {user} = useAppState();
   return (
     <aside className="sidebar">
       <a
@@ -51,6 +55,9 @@ function Navigation({view}) {
           History
         </button>
       </nav>
+      <button className={'nav-item account-profile-link ' + (view === 'account' ? 'active' : '')} aria-label={user ? 'Your profile' : 'Log in / Sign up'} title={user ? 'Your profile' : 'Log in / Sign up'} onClick={() => go('account')}>
+        <UserRound aria-hidden="true" /><span>{user ? user.name + ' · Profile' : 'Log in / Sign up'}</span>
+      </button>
     </aside>
   );
 }
@@ -59,10 +66,6 @@ function Home({exploring, setExploring}) {
   return (
     <>
       <section className="workspace-intro">
-        <p className="landing-description landing-corner" hidden={exploring}>
-          <strong>Your personal speaking coach.</strong>
-          <span>A little practice for your next big conversation.</span>
-        </p>
         <div className="workspace-title" hidden={exploring}>
           <span className="landing-tagline">Practice. Reflect. Repeat.</span>
           <h1>CircleBack</h1>
@@ -74,7 +77,7 @@ function Home({exploring, setExploring}) {
             onBlur={() => welcome('leave')}
             onClick={() => {
               welcome('confirm');
-              setTimeout(() => setExploring(true), matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 440);
+              explorePractice();
             }}
           >
             Explore <ArrowRight />
@@ -106,7 +109,7 @@ function Home({exploring, setExploring}) {
 
 function ChoiceHand() {
   return (
-    <svg className="choice-hand" viewBox="0 0 400 300" fill="none" aria-hidden="true">
+    <svg className="choice-hand" viewBox="0 120 400 210" fill="none" aria-hidden="true">
       <path d="M64 320 C100 279 113 248 145 226 C164 213 184 206 199 191 C211 180 220 163 230 164 C245 166 233 189 216 204 C206 213 194 219 185 218 C173 217 183 208 199 212 C222 219 248 217 267 206 C288 194 306 174 321 159 C331 149 342 142 347 149 C354 159 330 181 316 193 C301 207 286 217 273 221 C290 211 316 191 330 181 C344 171 353 171 354 180 C355 190 325 214 311 223 C300 230 286 236 278 236 C290 229 313 214 326 210 C340 205 345 213 335 223 C322 236 303 246 286 251 C276 254 268 254 265 252 C277 245 294 240 306 241 C318 244 302 257 288 262 C262 272 235 265 213 278 C194 290 185 308 173 327" />
     </svg>
   );
@@ -244,12 +247,13 @@ function Character() {
 }
 
 function History({sessions}) {
+  const {user, syncing, syncError} = useAppState();
   return (
     <>
       <div className="page-head">
         <div>
           <h1>Your conversations.</h1>
-          <p>{sessions.length} saved sessions · Stored in this browser</p>
+          <p>{sessions.length} saved sessions · {user ? (syncError ? 'Saved on this device · Sync pending' : syncing ? 'Syncing your account' : 'Synced to your account') : 'Saved in this browser'}</p>
         </div>
       </div>
       <div className="workspace-history">
@@ -276,9 +280,6 @@ function History({sessions}) {
           <div className="workspace-history-empty">
             <AudioLines />
             <h2>Room for your first conversation.</h2>
-            <button className="text-button" onClick={() => go('setup')}>
-              Start an interview <ArrowRight />
-            </button>
           </div>
         )}
       </div>
@@ -287,10 +288,10 @@ function History({sessions}) {
 }
 
 export default function App() {
-  const {view, navigation, sessions, selectedSession, interview} = useAppState();
+  const {view, navigation, sessions, selectedSession, interview, user, syncError, syncing, showPracticeChoices} = useAppState();
   const [exploring, setExploring] = useState(false);
-  // Every navigation returns the home page to its landing state.
-  useEffect(() => setExploring(false), [navigation]);
+  // Login opens the mode choices; ordinary home navigation keeps the landing page.
+  useEffect(() => setExploring(Boolean(showPracticeChoices)), [navigation, showPracticeChoices]);
   useLayoutEffect(() => {
     if (view === 'room') return; // the interview room sets its own body classes
     document.body.dataset.theme = 'moon';
@@ -304,12 +305,14 @@ export default function App() {
       <Navigation view={view} />
       <main className="main">
         <div className="content">
-          {view === 'home' ? (
+          {user && syncing && <p role="status" className="account-history-notice">Saving and refreshing account history…</p>}
+          {syncError && view !== 'account' && <p role="alert" className="account-history-notice">{syncError} Your copy is kept on this device. <button className="text-button" onClick={() => go('account')}>Retry from your profile</button></p>}
+          {view === 'account' ? <Account /> : view === 'home' ? (
             <Home exploring={exploring} setExploring={setExploring} />
           ) : view === 'setup' ? (
             <SetupPage Character={Character} />
           ) : view === 'history' ? (
-            <History sessions={sessions} />
+            <><p className="account-history-notice">{user ? `History for ${user.name}.` : 'Guest history is saved only in this browser.'} <button className="text-button" onClick={() => go('account')}>{user ? 'Manage account / refresh' : 'Log in to sync across devices'}</button></p>{syncError && <p role="alert">{syncError}</p>}<History sessions={sessions} /></>
           ) : view === 'summary' ? (
             selectedSession ? (
             <Feedback
@@ -320,10 +323,10 @@ export default function App() {
               onRetry={turn => retryQuestion(selectedSession, turn.q)}
             />
           ) : (
-            <History sessions={sessions} />
+            <><p className="account-history-notice">{user ? `History for ${user.name}.` : 'Guest history is saved only in this browser.'} <button className="text-button" onClick={() => go('account')}>{user ? 'Manage account / refresh' : 'Log in to sync across devices'}</button></p>{syncError && <p role="alert">{syncError}</p>}<History sessions={sessions} /></>
           )
           ) : (
-            <SpeakingSetup />
+            <SpeakingSetup Character={Character} />
           )}
         </div>
       </main>

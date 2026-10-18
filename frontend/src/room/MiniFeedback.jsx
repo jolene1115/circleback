@@ -66,7 +66,9 @@ export default function MiniFeedback({feedback, answer, last, onContinue, contin
               {STAR.map(part => (
                 <li key={part}>
                   <span>{part[0].toUpperCase() + part.slice(1)}</span>
-                  {star[part] === true ? (
+                  {star[part] === null || star[part] === undefined ? (
+                    <span className="mini-present">Not assessed</span>
+                  ) : star[part] ? (
                     <span className="mini-present">
                       <Check />
                       Present

@@ -79,3 +79,41 @@
  .moon-exploring .workspace-mode h2{font-size:20px}
  .moon-exploring .choice-hand{width:100%;left:0;height:230px;bottom:0}
 }
+/* Keep welcome copy and navigation on the same responsive content grid. */
+.moon-landing .content,.moon-exploring .content{max-width:1280px;padding:0 48px;margin:0 auto}
+.moon-landing .workspace-intro{height:calc(100dvh - 88px);min-height:500px;align-items:center}
+.moon-landing .workspace-title{width:360px;max-width:100%;align-self:center;margin:0;transform:translateY(34px)}
+.moon-landing .workspace-title h1{font-size:60px;line-height:1.12;margin:0 0 22px}
+.moon-landing .workspace-title .landing-description{max-width:340px;margin:0 0 28px}
+.moon-landing .landing-description strong{font-size:21px;line-height:1.45}
+.moon-landing .landing-description span{font-size:15px;max-width:320px;line-height:1.65;margin-top:12px}
+.moon-exploring .content{min-height:calc(100dvh - 88px);overflow:visible}
+.moon-exploring .workspace-modes{width:100%;max-width:1000px;margin:0 auto;min-height:calc(100dvh - 88px);gap:64px;align-items:center;padding:36px 0}
+.moon-exploring .workspace-mode,.moon-exploring .workspace-mode+.workspace-mode{display:grid;grid-template-rows:56px 24px auto;justify-items:center;align-content:center;height:auto;padding:0;min-width:0;gap:8px}
+.moon-exploring .workspace-mode>div{grid-row:1;min-height:0;margin:0;gap:14px;align-items:center}
+.moon-exploring .workspace-mode h2{font-size:28px;line-height:1.2;margin:0}
+.moon-exploring .choice-soon{grid-row:2;margin:0}
+.moon-exploring .choice-hand{grid-row:3;position:relative;left:auto;bottom:auto;width:100%;max-width:360px;height:auto;aspect-ratio:40/21;margin-top:14px}
+@media(min-width:761px) and (max-width:1099px){
+ .moon-landing .workspace-title{width:300px}
+ .moon-landing .workspace-title h1{font-size:48px}
+ .moon-landing .landing-description strong{font-size:19px}
+ .moon-exploring .workspace-modes{gap:32px}
+ .moon-exploring .workspace-mode h2{font-size:24px}
+}
+@media(max-width:760px){
+ .moon-landing .content,.moon-exploring .content{padding:0 22px}
+ .moon-landing .workspace-intro{height:calc(100dvh - 72px);min-height:0}
+ .moon-landing .workspace-title{align-self:flex-end;transform:none;margin:0 0 58px;width:340px}
+ .moon-landing .workspace-title h1{font-size:44px;margin-bottom:18px}
+ .moon-landing .landing-description strong{font-size:19px}
+ .moon-landing .landing-description span{font-size:14px;max-width:300px}
+ .moon-exploring .workspace-modes{min-height:calc(100dvh - 72px);gap:18px;padding:32px 0}
+ .moon-exploring .workspace-mode,.moon-exploring .workspace-mode+.workspace-mode{grid-template-rows:64px 24px auto}
+ .moon-exploring .workspace-mode>div{gap:6px}
+ .moon-exploring .workspace-mode h2{font-size:20px}
+ .moon-exploring .workspace-mode>div svg{flex:none;width:16px;height:16px}
+ .moon-exploring .choice-hand{width:100%;height:auto;max-width:280px;margin-top:8px}
+}
+@media(max-width:360px){.moon-landing .workspace-title h1{font-size:40px}.moon-exploring .workspace-mode h2{font-size:18px}}
+@media(max-width:760px) and (max-height:700px){.moon-landing .workspace-title h1{font-size:36px;margin-bottom:12px}.moon-landing .landing-description strong{font-size:17px}.moon-landing .landing-description span{font-size:13px;margin-top:8px}.moon-landing .workspace-title .landing-description{margin-bottom:18px}.moon-landing .workspace-title{margin-bottom:42px}}
