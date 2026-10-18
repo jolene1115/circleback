@@ -1,20 +1,37 @@
 /* The workspace surrounds the interview; the immersive room keeps its own layout. */
 const workspaceBase={home,nav,setup,coach,history,summary,bind};
 let workspaceHelloAt=0;
+let workspaceHover=0,workspaceHoverTarget=0,workspaceConfirmAt=-10000;
+window.addEventListener('cadence:welcome',event=>{
+ workspaceHoverTarget=event.detail==='hover'?1:0;
+ if(event.detail==='confirm')workspaceConfirmAt=performance.now();
+});
+function workspaceWelcomePose(t,dt){
+ const active=document.body.classList.contains('moon-landing')&&!reducedMotion.matches;
+ workspaceHover+=((active?workspaceHoverTarget:0)-workspaceHover)*(1-Math.exp(-dt*5));
+ if(!active)return {tilt:0,lift:0,nod:0};
+ const elapsed=(t-workspaceHelloAt)/1000;
+ return {tilt:workspaceHover*.035,lift:Math.sin(Math.PI*Math.max(0,Math.min(1,elapsed/1.4)))*2,
+  nod:Math.sin(Math.PI*Math.max(0,Math.min(1,(t-workspaceConfirmAt)/420)))*4};
+}
 const greetingLine=document.createElementNS('http://www.w3.org/2000/svg','path');
-greetingLine.setAttribute('d','M 703 413 C 724 427 738 443 751 441 C 772 438 782 403 785 376 C 787 360 779 348 772 337 C 764 325 755 314 760 309 C 767 301 778 317 787 327 C 782 308 772 277 778 271 C 789 260 794 295 799 314 C 798 293 790 256 799 254 C 811 250 809 290 812 310 C 814 292 812 264 821 266 C 831 268 823 300 824 317 C 830 303 831 286 838 289 C 849 294 832 329 830 347 C 827 365 820 374 814 386 C 809 404 805 435 791 454');
+greetingLine.setAttribute('d','M 703 413 C 724 427 738 443 751 441 C 772 438 782 403 785 376 C 787 360 779 348 772 337 C 765 327 753 316 758 310 C 765 300 777 318 785 326 C 788 329 789 327 788 323 C 783 307 772 281 777 274 C 780 268 786 269 789 276 C 793 286 796 303 799 313 C 800 317 802 316 801 312 C 800 297 791 267 796 260 C 799 254 805 257 807 263 C 811 276 810 295 812 309 C 813 313 815 313 815 309 C 817 295 814 278 819 274 C 824 269 829 274 829 280 C 830 291 825 307 825 317 C 825 321 827 322 829 318 C 833 310 833 300 837 298 C 843 295 846 302 844 309 C 840 323 833 335 830 347 C 827 365 820 374 814 386 C 809 404 805 435 791 454');
 const greetingLength=greetingLine.getTotalLength();
-const greetingPoints=Array.from({length:180},(_,i)=>greetingLine.getPointAtLength(greetingLength*i/179));
+const greetingPoints=Array.from({length:640},(_,i)=>greetingLine.getPointAtLength(greetingLength*i/639));
 function drawWorkspaceGreeting(c,t,anchor){
  if(!document.body.classList.contains('moon-landing'))return;
  const elapsed=(t-workspaceHelloAt)/1000;
- const phase=Math.max(0,Math.min(1,(elapsed-.6)/3));
- const wave=reducedMotion.matches?0:Math.sin(phase*Math.PI*4)*Math.sin(phase*Math.PI)*.10;
+ const phase=Math.max(0,Math.min(1,(elapsed-1.1)/2.8));
+ const rest=reducedMotion.matches?0:Math.max(0,Math.min(1,(elapsed-3.9)/1.8));
+ const relaxed=rest*rest*(3-2*rest);
+ const wave=reducedMotion.matches?0:Math.sin(phase*Math.PI*4)*Math.sin(phase*Math.PI)*.065;
  const pivot={x:800,y:375};
  for(const point of greetingPoints){
-  const hand=Math.max(0,Math.min(1,(400-point.y)/65)),angle=wave*hand;
-  const dx=point.x-pivot.x,dy=point.y-pivot.y;
-  c.lineTo(anchor.x+pivot.x+dx*Math.cos(angle)-dy*Math.sin(angle)-703,anchor.y+pivot.y+dx*Math.sin(angle)+dy*Math.cos(angle)-413);
+  const hand=Math.max(0,Math.min(1,(425-point.y)/70));
+  const weight=hand*hand*(3-2*hand),angle=(wave+.13*relaxed)*weight;
+  const fingertip=Math.max(0,Math.min(1,(330-point.y)/70));
+  const dx=(point.x-pivot.x)*(1-.07*relaxed*fingertip),dy=point.y-pivot.y+4*relaxed*fingertip;
+  c.lineTo(anchor.x+pivot.x+dx*Math.cos(angle)-dy*Math.sin(angle)-703,anchor.y+pivot.y+dx*Math.sin(angle)+dy*Math.cos(angle)-413+9*relaxed*weight);
  }
 }
 function choiceHand(){

@@ -36,6 +36,7 @@ async function startTranscript(){
  processor.onaudioprocess=e=>{
   if(!state.valid||recorder.state!=='recording')return;
   const data=new Float32Array(e.inputBuffer.getChannelData(0));state.parts.push(data);state.count+=data.length;
+  input.dataset.durationSec=String(Number(input.dataset.durationSec||0)+data.length/context.sampleRate);
   // Send at a natural pause once there is enough context; cap continuous speech at 8s.
   const rms=Math.sqrt(data.reduce((sum,value)=>sum+value*value,0)/data.length);
   state.quietSamples=rms<0.008?state.quietSamples+data.length:0;

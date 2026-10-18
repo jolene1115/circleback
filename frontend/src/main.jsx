@@ -1,6 +1,7 @@
 import React from 'react';
 import {createRoot} from 'react-dom/client';
 import App from './App.jsx';
+import {feedbackPreview} from './feedback-preview.js';
 
 async function boot(){
  const bootstrap=document.createElement('div');bootstrap.hidden=true;
@@ -10,6 +11,7 @@ async function boot(){
   await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='/'+file;script.onload=resolve;script.onerror=reject;document.head.append(script);});
  }
  window.cadence.stopFigure();bootstrap.remove();
+ if(new URLSearchParams(location.search).get('preview')==='feedback')window.cadence.selectSession(feedbackPreview);
  createRoot(document.getElementById('root')).render(<App/>);
 }
 boot().catch(()=>{document.getElementById('root').textContent='Could not load Cadence. Please refresh.';});

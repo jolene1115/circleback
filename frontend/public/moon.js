@@ -78,7 +78,7 @@ figurePath.setAttribute('d','M 225 425 C 270 389 325 382 368 373 C 392 368 400 3
 const curveLength=figurePath.getTotalLength(),figure=Array.from({length:520},(_,i)=>{const p=figurePath.getPointAtLength(i*curveLength/519);return{x:p.x+65,y:p.y-12};});
 function moonStage(compact=false){return `<div class="moon-stage ${compact?'moon-small':''}"><canvas class="moon-canvas" width="1000" height="500" aria-label="Original continuous-line interviewer, morphing into a waveform when speaking"></canvas><div class="moon-caption"><span class="moon-dot"></span><span id="moonStatus" role="status">${moonStateLabel()}</span></div></div>`;}
 function moonStateLabel(){return {listening:'Here with you',responding:view==='home'?'Your turn · motion preview':'Listening to your voice',speaking:'Speaking',thinking:'Thinking · sample transition'}[moonState];}
-function moonSet(s){if(s!==moonState){moonStateAt=performance.now();if(s==='listening'&&moonState==='speaking')moonReturnAt=moonStateAt+700;if(s==='responding'){moonAttentionAt=moonStateAt;moonLastAck=moonStateAt;}moonVoiceSince=moonQuietSince=0;moonPhraseReady=false;}moonState=s;if($('#moonStatus'))$('#moonStatus').textContent=moonStateLabel();document.querySelectorAll('[data-moon-state]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.moonState===s));}
+function moonSet(s){if(s!==moonState){moonStateAt=performance.now();if(['listening','responding'].includes(s)&&['speaking','thinking'].includes(moonState)){moonReturnAt=moonStateAt+300;moonBlinkAt=moonStateAt;moonGazeTarget=moonGazeYTarget=0;}if(s==='responding'){moonAttentionAt=moonStateAt;moonLastAck=moonStateAt;}moonVoiceSince=moonQuietSince=0;moonPhraseReady=false;}moonState=s;if($('#moonStatus'))$('#moonStatus').textContent=moonStateLabel();document.querySelectorAll('[data-moon-state]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.moonState===s));}
 function moonStopVoice(){browserVoice.stop();clearTimeout(moonCaptionGuard);moonCaptionThrough(Infinity);clearTimeout(moonRecordTimer);moonRecordTimer=null;clearTimeout(moonAutoTimer);clearTimeout(moonStartGuard);moonAutoTimer=moonStartGuard=null;moonSpeech++;moonUtterance=null;moonHoldUntil=0;moonSet('listening');}
 function moonSpeak(){
  if(recording?.state==='recording'){microphone();moonReleaseAudio();}
@@ -99,6 +99,8 @@ function strokeMoonLine(c,color,opacity=1){
 function moonDraw(t){
  if(!moonCanvas?.isConnected)return;
  const dt=Math.min((t-moonLast)/1000||.016,.05);moonLast=t;
+ const welcome=typeof workspaceWelcomePose==='function'?workspaceWelcomePose(t,dt):{tilt:0,lift:0,nod:0};
+ if(t-moonPointerAt>2600){moonGazeTarget=0;moonGazeYTarget=0;}
  const goal=(moonState==='speaking'&&t-moonStateAt>130&&moonThought<.16)||t<moonHoldUntil?1:0;moonProgress+=(goal-moonProgress)*(1-Math.exp(-dt*(reducedMotion.matches?18:goal?3.8:2.7)));
  moonEyeThought+=((moonState==='thinking'?1:0)-moonEyeThought)*(1-Math.exp(-dt*9));
  moonThought+=((moonState==='thinking'&&t-moonStateAt>240?1:0)-moonThought)*(1-Math.exp(-dt*(reducedMotion.matches?22:3.5)));
@@ -137,9 +139,10 @@ function moonDraw(t){
  // Flatten the resting smile locally; expression changes stay on the same curve.
  const py=p.y-350-(p.y-202)*blink*.93*eye-6*moonEyeThought*eye-(p.y-290)*mouth*((ink?0:.72)-.45*moonWarmSmile-.18*gesture.smile)-rightEye*(8*moonCurious+4*moonEyeThought)+rightEye*5*moonUnsure+(reducedMotion.matches?0:moonGazeY*3-Math.abs(gesture.look)*3)*eye-6*Math.abs(gesture.brow)*(gesture.brow>0?rightEye:leftEye);
  // Rotate around the neck; shoulders stay anchored while the face looks upward.
- const tilt=nod+(-.16*thought+.045*moonCurious-.06*moonUnsure+.035*gesture.tilt)*head;
+ const tilt=nod+(-.16*thought+.045*moonCurious-.06*moonUnsure+.035*gesture.tilt+welcome.tilt)*head;
  const lean=reducedMotion.matches?0:moonLean*head;
- const x=500+(px*Math.cos(tilt)-py*Math.sin(tilt))*(1+.045*lean),y=350+px*Math.sin(tilt)+py*Math.cos(tilt)-8*thought*head+(reducedMotion.matches?0:Math.sin(time*.9)*.8+attention*7*head*(1-thought)+lean*7-returning*5*head);
+ const breath=(Math.sin(time*1.15)+.22*Math.sin(time*.61))*.65;
+ const x=500+(px*Math.cos(tilt)-py*Math.sin(tilt))*(1+.045*lean),y=350+px*Math.sin(tilt)+py*Math.cos(tilt)-8*thought*head+(reducedMotion.matches?0:breath*(.35+.65*head)+attention*7*head*(1-thought)+lean*7-returning*5*head+(welcome.nod-welcome.lift)*head);
  const envelope=Math.pow(Math.sin(Math.PI*u),1.6),pulse=reducedMotion.matches?.55:(.5+.25*Math.sin(time*2.1)+.18*Math.sin(time*4.3));const wy=250+envelope*(Math.sin(u*Math.PI*12-time*5)*55+Math.sin(u*Math.PI*21+time*2.3)*16)*pulse;
  const gaze=reducedMotion.matches?0:moonHeadGaze*8*head*(1-thought);
  const fx=(x+gaze)*(1-blend)+(120+u*760)*blend;

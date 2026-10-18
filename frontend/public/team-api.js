@@ -43,10 +43,11 @@ bind=function(){
     if(failed?.failed)throw Error('Transcription was incomplete. Please record your answer again.');
     const spoken=$('#answer').value.trim();if(!spoken)throw Error('No speech transcribed yet. Please record your answer.');
     moonStopVoice();moonSet('thinking');
-    const feedback=await teamRequest('interview/feedback',{question,transcript:spoken,interview:interviewContext()});
+    const durationSec=Number($('#answer').dataset.durationSec||0);
+    const feedback=await teamRequest('interview/feedback',{question,transcript:spoken,interview:interviewContext(),metrics:{durationSec,wordsPerMinute:0,fillerCount:0,fillerWords:{}}});
     if(!form.isConnected)return;
     if(['strength','improvement','retry_challenge'].some(k=>typeof feedback[k]!=='string'||!feedback[k].trim()))throw Error('The server returned incomplete feedback. Please try again.');
-    cleanup();turns.push({q:question,a:spoken,feedback});answer='';
+    cleanup();turns.push({q:question,a:spoken,feedback,metrics:feedback.metrics});answer='';
     if(turns.length>=Number(config.rounds)){finish();return;}
     question=feedback.retry_challenge;moonSet('listening');render();
    }catch(err){if(form.isConnected){$('#answerError').textContent=err.message;moonSet('listening');}}

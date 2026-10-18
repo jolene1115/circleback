@@ -78,10 +78,21 @@ class InterviewFeedbackRequest(BaseModel):
     interview: Optional[InterviewContext] = None
 
 
+class InterviewStarCheck(BaseModel):
+    # Null means not assessed, distinct from a missing part of an applicable story.
+    situation: Optional[bool]
+    task: Optional[bool]
+    action: Optional[bool]
+    result: Optional[bool]
+
+
 class InterviewFeedbackResponse(BaseModel):
     strength: NonEmptyText
     improvement: NonEmptyText
     retry_challenge: NonEmptyText
+    star_check: Optional[InterviewStarCheck] = None
+    delivery_tip: Optional[str] = None
+    metrics: Optional[Metrics] = None
 
 
 # POST /api/speaking/feedback

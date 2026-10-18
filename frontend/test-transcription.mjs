@@ -6,7 +6,7 @@ import vm from 'node:vm';
 async function recorder({holdFirst=false}={}) {
  let processor,release;
  const requests=[];
- const input={value:'',isConnected:true},status={textContent:''};
+ const input={value:'',dataset:{},isConnected:true},status={textContent:''};
  class Context {
   sampleRate=16000;destination={};
   createMediaStreamSource(){return {connect(){},disconnect(){}};}
@@ -51,5 +51,6 @@ test('slow requests remain ordered and final audio is not lost',async()=>{
  const stopped=r.stop();assert.equal(r.requests.length,1);
  r.release();await stopped;
  assert.deepEqual(r.requests.map(x=>x.duration),[4,4,1]);
+ assert.equal(Number(r.input.dataset.durationSec),9);
  assert.equal(r.input.value,'Part 1. Part 2. Part 3.');
 });

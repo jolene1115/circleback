@@ -15,7 +15,7 @@ window.cadence={
  edit:openInkEditor,
  collection:openInterviewerCollection,
  selectSession:s=>{selectedSession=s;go('summary');},
- retry:s=>{config.custom=s.topic;config.context=s.context||'';config.focus=s.focus.filter(f=>focusOptions.includes(f));config.extra=s.focus.filter(f=>!focusOptions.includes(f)).join(', ');go('setup');},
+ retry:s=>{config.custom=s.topic;config.context=s.context||'';config.focus=s.focus||[];config.extra='';go('setup');},
  topicOptions,focusOptions,
  dispose:()=>{cleanup();moonCloseMic();immersiveObserver?.disconnect();},
  request:teamRequest

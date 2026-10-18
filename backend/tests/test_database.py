@@ -41,11 +41,12 @@ class DatabaseIntegrationTests(unittest.TestCase):
                 'sessionId': session_id, 'question': 'Tell me about yourself',
                 'transcript': 'um I built a project', 'metrics': METRICS})
         self.assertEqual(response.status_code, 200, response.text)
-        self.assertEqual(response.json(), FB)
+        self.assertEqual({key: response.json()[key] for key in FB}, FB)
+        self.assertEqual(response.json()['metrics']['wordsPerMinute'], 10)
         with TestClient(app) as restarted:
             saved = restarted.get(f'/api/sessions/{session_id}/attempts').json()
         self.assertEqual(len(saved), 1)
-        self.assertEqual(saved[0]['feedback'], FB)
+        self.assertEqual(saved[0]['feedback'], response.json())
         self.assertEqual(saved[0]['metrics']['fillerCount'], 1)
         self.assertEqual(saved[0]['metrics']['wordsPerMinute'], 10)
         self.assertEqual(self.client.get('/api/sessions', params={'userId': self.user['id']}).json()[0]['id'], session_id)
