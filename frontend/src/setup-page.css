@@ -2,11 +2,6 @@
 .moon-setup .setup-permission input{width:16px;height:16px;padding:0;flex:0 0 16px}.setup-permission span{min-width:0;flex:1}.moon-setup .setup-character .moon-stage{overflow:hidden}.moon-setup .setup-character .moon-canvas{transform:scale(1.65);transform-origin:center}
 @media(max-width:760px){.setup-new-heading{margin-bottom:30px;gap:9px}.setup-new-heading h1{font-size:25px}.setup-target>label{font-size:19px}.moon-setup .setup-target input{font-size:16px}.setup-kind{gap:2px}.setup-kind button{padding:8px 11px}.moon-setup .setup-character .moon-coach{grid-template-columns:110px minmax(0,1fr);gap:14px}.moon-setup .setup-character .moon-stage{width:110px;height:140px}.moon-setup .setup-character .workspace-voice{padding-right:20px}.moon-setup .setup-character .browser-voice-picker{flex-wrap:wrap}.moon-setup .setup-character .browser-voice-picker select{width:100%;flex-basis:100%;font-size:12px}.setup-start{gap:14px}.setup-start .main-button{width:auto}.setup-advanced>div{gap:16px}.setup-focus-list{gap:14px}.setup-new-form>section{margin-bottom:28px}}
 
-.setup-new-form .resume-help{font-size:12px;font-style:italic;font-weight:400;line-height:1.6;color:#a4afba}
-.resume-upload-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.resume-upload-row input{flex:1;min-width:0;max-width:100%}
-.resume-clear{margin-left:auto;flex:none;background:transparent;border:1px solid #53616e;border-radius:5px;color:#cfdae4;padding:7px 12px;font:inherit;font-size:12px;cursor:pointer}
-.resume-clear:disabled{opacity:.5;cursor:default}
 
 .setup-session-settings{padding-top:20px}
 .setup-session-settings>h2{display:flex;align-items:center;gap:10px}
@@ -15,14 +10,6 @@
 .question-count-options button{min-width:42px;border-color:#53616e}
 @media(max-width:480px){.setup-session-settings>div{grid-template-columns:1fr}}
 
-.resume-help-row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:24px;margin:8px 0 12px}
-.setup-new-form .resume-upload-help{margin:0}
-.resume-text-box{position:relative}
-.resume-help-row .resume-clear{flex:none;background:none;border:0;border-radius:0;padding:0;color:#cfdae4;font-size:12px;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
-.resume-help-row .resume-clear:hover{color:#fff}
-.moon-setup .resume-text-box.has-resume textarea{padding-top:14px}
-.setup-new-form .resume-privacy-note{font-size:9px;white-space:nowrap;max-width:100%}
-@media(max-width:760px){.setup-new-form .resume-privacy-note{font-size:clamp(3px,1.05vw,8px)}}
 
 .moon-setup .setup-target #interview-target{font-size:14px}
 .setup-session-settings>div{grid-template-columns:1fr}
@@ -43,9 +30,30 @@
 .speech-points{list-style:none;margin:0 0 6px;padding:0;display:grid;gap:4px}.speech-points li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #2b3138;color:#dbe3ea;font-size:14px}.speech-points span{overflow-wrap:anywhere;min-width:0}.speech-points button{flex:none;width:28px;height:28px;display:grid;place-items:center;background:none;border:0;color:#9aa6b2;cursor:pointer}.speech-points button:hover{color:#edf2f6}.speech-add-point{max-width:420px}
 /* Number of questions and Feedback side by side; stacked on narrow screens. */
 .moon-setup .setup-session-settings>div{grid-template-columns:auto auto;justify-content:start;column-gap:48px;row-gap:24px}
-.feedback-timing-options{margin-bottom:0;gap:8px}
-.feedback-timing-options button{border-color:#53616e}
+.feedback-timing-options,.interview-style-options{margin-bottom:0;gap:8px}
+.feedback-timing-options button,.interview-style-options button{border-color:#53616e}
 @media(max-width:560px){.moon-setup .setup-session-settings>div{grid-template-columns:1fr}}
 /* Drawing tools sit in the voice row, right of the preview (volume) button. */
 .moon-setup .setup-character .edit-interviewer,.moon-setup .setup-character .collection-interviewer{position:static}
 @media(max-width:760px){.moon-setup .setup-character .browser-voice-picker{flex-wrap:wrap}.moon-setup .setup-character .browser-voice-picker select{flex:1 1 100%}}
+/* Interview track tabs and resume upload. */
+.track-switch{display:flex;border-bottom:1px solid #343c45;gap:20px}
+.track-switch button{padding:12px 2px;border:0;border-bottom:2px solid transparent;background:none;color:#a9b5c0;font:inherit;font-size:14px;cursor:pointer}
+.track-switch button[aria-pressed=true]{color:#edf2f6;border-bottom-color:#d5e1eb}
+.resume-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:16px}
+.resume-heading span,.resume-limit{font-size:12px;color:#929ca6}
+.resume-upload{display:flex;align-items:center;gap:12px;margin-bottom:12px;min-height:44px}
+.resume-upload-button{display:flex;align-items:center;gap:10px;min-width:0;max-width:100%;padding:10px 0;border:0;background:none;color:#d5e1eb;font:inherit;font-size:14px;text-align:left;cursor:pointer}
+.resume-upload-button span{overflow-wrap:anywhere;min-width:0}
+.resume-upload-button svg,.resume-upload .icon-button{flex:none}
+.resume-limit{white-space:nowrap;margin-left:auto}
+.resume-section textarea{min-height:160px!important}
+.resume-status{display:flex;align-items:center;gap:6px;min-height:24px;font-size:12px;color:#a9b5c0;margin-top:8px}
+.resume-status .error{margin:0}
+.resume-note{font-size:12px;line-height:1.65;color:#929ca6;max-width:560px;margin:6px 0 0}
+.resume-spinner{animation:resume-spin 1s linear infinite}
+.resume-review{display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:6px 0;border:0;background:none;color:#d5e1eb;font:inherit;font-size:13px;cursor:pointer}
+.resume-review[aria-expanded=true] svg{transform:rotate(180deg)}
+.resume-section textarea[hidden]{display:none}
+@keyframes resume-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.resume-spinner{animation:none}}
