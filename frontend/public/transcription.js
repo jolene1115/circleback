@@ -6,6 +6,7 @@ function pcmWav(pcm,sampleRate){
  pcm.forEach((s,i)=>v.setInt16(44+i*2,Math.max(-1,Math.min(1,s))*(s<0?32768:32767),true));return new Blob([buffer],{type:'audio/wav'});
 }
 let liveTranscript=null;
+let answerSeconds=0; // recorded length of the current answer, sent with feedback so the server can compute pace
 async function startTranscript(){
  if(liveTranscript||!stream||recording?.state!=='recording')return;
  const input=$('#answer'),recorder=recording;
@@ -28,6 +29,7 @@ async function startTranscript(){
     const response=await fetch('/api/transcribe',{method:'POST',body,signal:controller.signal});
     if(!response.ok)throw new Error('Transcription unavailable');
     const result=await response.json();
+    if(state.valid)answerSeconds+=pcm.length/context.sampleRate;
     if(state.valid&&input.isConnected&&result.transcript){input.value=(input.value.trim()+' '+result.transcript).trim().slice(0,5000);answer=input.value;const caption=$('#liveAnswer');if(caption){caption.textContent=answer;caption.scrollTop=caption.scrollHeight;}$('#answerError').textContent='';}
    }catch(e){if(state.valid){state.failed=true;$('#micStatus').textContent='Transcription unavailable';$('#answerError').textContent='Transcription failed. Stop and record again; part of your answer may be missing.';toast('Transcription unavailable. Check the server connection and AI service quota.');state.valid=false;}}
    finally{clearTimeout(timeout);state.requests.delete(controller);}

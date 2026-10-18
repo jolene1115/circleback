@@ -5,7 +5,13 @@ from fastapi import APIRouter, Depends, HTTPException
 from google import genai
 from google.genai import errors
 
-from backend.models import InterviewContext, InterviewFeedbackRequest, InterviewFeedbackResponse, QuestionResponse
+from backend.models import (
+    InterviewContext,
+    InterviewFeedbackRequest,
+    InterviewFeedbackResponse,
+    InterviewFeedbackWithMetrics,
+    QuestionResponse,
+)
 from backend.services import db
 from backend.services.metrics import compute_metrics
 from backend.test_llm import (
@@ -53,14 +59,19 @@ def question(request: InterviewContext | None = None, client=Depends(get_client)
         raise HTTPException(502, "AI returned an invalid question.") from exc
 
 
-@router.post("/feedback", response_model=InterviewFeedbackResponse)
+@router.post("/feedback", response_model=InterviewFeedbackWithMetrics)
 def feedback(request: InterviewFeedbackRequest, client=Depends(get_client)):
     if request.sessionId:
         db.get_session(request.sessionId, "interview")
+
+    # Pace and filler numbers are computed in code from the final transcript, using the recording
+    # length from either `metrics` (terminal scripts) or `durationSec` (frontend).
+    duration = request.metrics.durationSec if request.metrics else (request.durationSec or 0)
+    metrics = compute_metrics(request.transcript, duration) if duration > 0 else None
     try:
         transcription = {"transcript": request.transcript}
-        if request.metrics:
-            transcription["metrics"] = request.metrics.model_dump()  # lets feedback cite real pace/filler numbers
+        if metrics:
+            transcription["metrics"] = metrics.model_dump()  # lets feedback cite real pace/filler numbers
         result = feedback_from_transcription(client, request.question, transcription,
                                              request.interview.model_dump_json() if request.interview else None)
         validated = InterviewFeedbackResponse.model_validate(result)
@@ -70,7 +81,7 @@ def feedback(request: InterviewFeedbackRequest, client=Depends(get_client)):
         raise HTTPException(502, "AI returned invalid feedback.") from exc
 
     if request.sessionId:
-        metrics = compute_metrics(request.transcript, request.metrics.durationSec if request.metrics else 0)
+        saved = metrics or compute_metrics(request.transcript, 0)
         db.save_attempt(request.sessionId, request.question, request.transcript,
-                        metrics.model_dump(), validated.model_dump(), mode="interview")
-    return validated
+                        saved.model_dump(), validated.model_dump(), mode="interview")
+    return InterviewFeedbackWithMetrics(**validated.model_dump(), metrics=metrics)  # metrics shown in the frontend

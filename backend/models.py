@@ -68,6 +68,9 @@ class InterviewFeedbackRequest(BaseModel):
     question: NonEmptyText
     transcript: NonEmptyText  # the "transcript" field from /api/transcribe
     metrics: Optional[Metrics] = None  # optional: pass /api/transcribe's metrics through
+    # Alternative to metrics: total recording length. The server then computes metrics from the
+    # final transcript (the frontend transcribes in chunks, so it only knows the total time).
+    durationSec: Optional[NonNegativeFloat] = None
     interview: Optional[InterviewContext] = None
 
 
@@ -79,6 +82,13 @@ class InterviewFeedbackResponse(BaseModel):
     retry_challenge: NonEmptyText
     star_check: Optional[StarCheck] = None
     delivery_tip: Optional[str] = None  # only when pace or filler words were off
+
+
+class InterviewFeedbackWithMetrics(InterviewFeedbackResponse):
+    """What POST /api/interview/feedback returns. Saved attempts keep metrics separately, so history uses
+    InterviewFeedbackResponse."""
+
+    metrics: Optional[Metrics] = None  # the numbers the feedback was based on (computed in code), for display
 
 
 # POST /api/speaking/feedback

@@ -46,7 +46,9 @@ class DatabaseIntegrationTests(unittest.TestCase):
                 'sessionId': session_id, 'question': 'Tell me about yourself',
                 'transcript': 'um I built a project', 'metrics': METRICS})
         self.assertEqual(response.status_code, 200, response.text)
-        self.assertEqual(response.json(), FB)
+        body = response.json()
+        self.assertEqual(body.pop('metrics')['fillerCount'], 1)  # recomputed on the server, not the client's 999
+        self.assertEqual(body, FB)
         with TestClient(app) as restarted:
             saved = restarted.get(f'/api/sessions/{session_id}/attempts').json()
         self.assertEqual(len(saved), 1)

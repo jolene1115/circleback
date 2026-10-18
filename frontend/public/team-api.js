@@ -8,6 +8,23 @@ async function teamRequest(path,payload){
  catch(error){if(error.name==='AbortError')throw Error('The server took too long. Please try again.');throw error;}
  finally{clearTimeout(timer);}
 }
+// Show the AI's feedback in place of the answer box; `next` runs when the user continues.
+function showFeedback(feedback,last,next){
+ const form=$('#answerForm');if(!form)return next();
+ const rows=[['Strength',feedback.strength],['Next step',feedback.improvement]];
+ if(feedback.example_rewrite)rows.push(['Try saying',feedback.example_rewrite]);
+ if(feedback.delivery_tip)rows.push(['Delivery',feedback.delivery_tip]);
+ const m=feedback.metrics,star=feedback.star_check;
+ const fillers=m?Object.entries(m.fillerWords).map(([w,n])=>esc(w)+' ×'+n).join(', '):'';
+ const stats=m?'<p class="answer-feedback-stats">'+m.wordsPerMinute+' words/min · '+m.fillerCount+' filler'+(m.fillerCount===1?'':'s')+(fillers?' ('+fillers+')':'')+' · '+Math.round(m.durationSec)+'s</p>':'';
+ const starChips=star?'<div class="answer-feedback-star" aria-label="STAR check">'+['situation','task','action','result'].map(k=>'<span class="'+(star[k]?'hit':'miss')+'">'+(star[k]?'✓ ':'✗ ')+k[0].toUpperCase()+k.slice(1)+'</span>').join('')+'</div>':'';
+ const panel=document.createElement('section');panel.className='answer-feedback';panel.setAttribute('aria-live','polite');
+ panel.innerHTML='<h3>Feedback</h3>'+stats+starChips+'<div class="answer-feedback-rows">'+rows.map(([label,text])=>'<div class="answer-feedback-row"><small>'+label+'</small><p>'+esc(text)+'</p></div>').join('')+'</div><button type="button" class="main-button">'+(last?'See summary ':'Next question ')+icon('arrow-right')+'</button>';
+ form.style.display='none';form.after(panel);lucide.createIcons();
+ const dialogue=panel.closest('.moon-dialogue');dialogue?.classList.add('has-feedback');
+ const button=panel.querySelector('button');button.focus();
+ button.onclick=()=>{panel.remove();dialogue?.classList.remove('has-feedback');form.style.display='';next();};
+}
 summary=function(){
  const markup=teamBaseSummary(),s=selectedSession;
  if(!s?.turns.some(t=>t.feedback))return markup;
@@ -26,7 +43,7 @@ bind=function(){
   fetch('/api/health').then(r=>{if(!r.ok)throw Error();return r.json();}).then(data=>{if(!form.isConnected)return;button.disabled=!data.keyConfigured;service.textContent=data.keyConfigured?'Ready to practice':'API key needed on server';}).catch(()=>{if(form.isConnected)service.textContent='Server unavailable. Refresh to retry.';});
   const consent=document.createElement('label');consent.className='team-consent';consent.innerHTML='<input type="checkbox" required> <span>Send my audio and answers to the AI service.</span>';button.parentElement.before(consent);
   const error=document.createElement('p');error.className='error';error.setAttribute('role','alert');form.append(error);
-  form.onsubmit=async e=>{e.preventDefault();if(button.disabled||!form.reportValidity())return;saveConfig();button.disabled=true;error.textContent='';const label=button.innerHTML;button.textContent='Preparing...';
+  form.onsubmit=async e=>{e.preventDefault();if(button.disabled||!form.reportValidity())return;saveConfig();answerSeconds=0;button.disabled=true;error.textContent='';const label=button.innerHTML;button.textContent='Preparing...';
    try{const result=await teamRequest('interview/question',{...interviewContext(),history:[]});if(!form.isConnected)return;if(typeof result.question!=='string'||!result.question.trim())throw Error('The server returned an empty question.');teamOpening=result.question;start(e);}
    catch(err){if(form.isConnected)error.textContent=err.message;}
    finally{if(form.isConnected){button.disabled=false;button.innerHTML=label;}}
@@ -43,12 +60,12 @@ bind=function(){
     if(failed?.failed)throw Error('Transcription was incomplete. Please record your answer again.');
     const spoken=$('#answer').value.trim();if(!spoken)throw Error('No speech transcribed yet. Please record your answer.');
     moonStopVoice();moonSet('thinking');
-    const feedback=await teamRequest('interview/feedback',{question,transcript:spoken,interview:interviewContext()});
+    const feedback=await teamRequest('interview/feedback',{question,transcript:spoken,interview:interviewContext(),durationSec:answerSeconds||undefined});
     if(!form.isConnected)return;
     if(['strength','improvement','retry_challenge'].some(k=>typeof feedback[k]!=='string'||!feedback[k].trim()))throw Error('The server returned incomplete feedback. Please try again.');
-    cleanup();turns.push({q:question,a:spoken,feedback});answer='';
-    if(turns.length>=Number(config.rounds)){finish();return;}
-    question=feedback.retry_challenge;moonSet('listening');render();
+    cleanup();turns.push({q:question,a:spoken,feedback});answer='';answerSeconds=0;
+    const last=turns.length>=Number(config.rounds);moonSet('listening');
+    showFeedback(feedback,last,()=>{if(last){finish();return;}question=feedback.retry_challenge;render();});
    }catch(err){if(form.isConnected){$('#answerError').textContent=err.message;moonSet('listening');}}
    finally{if(form.isConnected){submitting=false;form.dataset.transcribing='false';}}
   };
