@@ -189,3 +189,21 @@ website, not a separate localhost database. HTTPS and persistent server storage 
 required for deployment; set `COOKIE_SECURE=true` for HTTPS. Password recovery and
 email verification are not implemented yet. See [frontend integration](docs/frontend-integration.md)
 for account APIs, deployment details, and tests.
+
+## Resume deep-dive interviews
+
+In interview setup, choose **Resume deep dive**, upload a text-based PDF or paste
+resume text, review the extracted text, then start. The existing recorder and
+feedback flow are reused; questions and follow-ups use the resume and target topic.
+Behavioral remains the default for existing clients.
+
+`POST /api/interview/resume` accepts multipart field `file` and returns
+`{"resumeText": "..."}`. Extraction uses pypdf locally without Gemini or saving the
+PDF. Limits: 5 MB, 5 pages, 20,000 extracted characters. Encrypted, invalid and
+image-only PDFs are rejected; paste text instead. Extraction may reorder columns.
+Question setup and feedback's `interview` object accept `type` (`behavioral` or
+`resume`) and `resumeText` (required for resume mode).
+
+Resume text is held in active browser setup state, cleared on returning home,
+and excluded from saved setup history. Spoken answers, generated questions and
+feedback may still contain resume details and are saved in normal history.
