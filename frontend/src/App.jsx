@@ -65,10 +65,6 @@ function Home({exploring, setExploring}) {
   return (
     <>
       <section className="workspace-intro">
-        <p className="landing-description landing-corner" hidden={exploring}>
-          <strong>Your personal speaking coach.</strong>
-          <span>A little practice for your next big conversation.</span>
-        </p>
         <div className="workspace-title" hidden={exploring}>
           <span className="landing-tagline">Practice. Reflect. Repeat.</span>
           <h1>CircleBack</h1>
