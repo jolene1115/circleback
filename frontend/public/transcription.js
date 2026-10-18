@@ -12,13 +12,13 @@ async function startTranscript(){
  const context=new AudioContext({sampleRate:16000});
  const source=context.createMediaStreamSource(stream),processor=context.createScriptProcessor(4096,1,1);
  const silent=context.createGain();silent.gain.value=0;
- const state={context,source,processor,silent,parts:[],count:0,chain:Promise.resolve(),valid:true,input,requests:new Set(),failed:false};
+ const state={context,source,processor,silent,parts:[],count:0,quietSamples:0,chain:Promise.resolve(),valid:true,input,requests:new Set(),failed:false};
  liveTranscript=state;
  state.flush=()=>{
   if(!state.count)return;
   const pcm=new Float32Array(state.count);let offset=0;
   for(const part of state.parts){pcm.set(part,offset);offset+=part.length;}
-  state.parts=[];state.count=0;
+  state.parts=[];state.count=0;state.quietSamples=0;
   state.chain=state.chain.then(async()=>{
    if(!state.valid)return;
    const controller=new AbortController();state.requests.add(controller);
@@ -36,7 +36,10 @@ async function startTranscript(){
  processor.onaudioprocess=e=>{
   if(!state.valid||recorder.state!=='recording')return;
   const data=new Float32Array(e.inputBuffer.getChannelData(0));state.parts.push(data);state.count+=data.length;
-  if(state.count>=context.sampleRate*8)state.flush();
+  // Send at a natural pause once there is enough context; cap continuous speech at 8s.
+  const rms=Math.sqrt(data.reduce((sum,value)=>sum+value*value,0)/data.length);
+  state.quietSamples=rms<0.008?state.quietSamples+data.length:0;
+  if(state.count>=context.sampleRate*8||(state.count>=context.sampleRate*4&&state.quietSamples>=context.sampleRate*.5))state.flush();
  };
  source.connect(processor);processor.connect(silent);silent.connect(context.destination);
  recorder.addEventListener('stop',()=>{if(liveTranscript===state)stopTranscript(false);},{once:true});
