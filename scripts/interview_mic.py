@@ -70,14 +70,12 @@ def practice(question: str, args) -> bool:
     say("💬 Getting feedback...")
     fb = post("/interview/feedback", json={"question": question, "transcript": body["transcript"], "metrics": body["metrics"], "sessionId": args.session_id})
     if fb:
-        star = fb["star_check"]
-        star_line = "  ".join(f"{'✓' if star[k] else '✗'} {k.title()}" for k in ("situation", "task", "action", "result"))
-        lines = [
-            f"\n✅ Strength:    {fb['strength']}",
-            f"🔧 Improve:     {fb['improvement']}",
-            f"✍️  Try saying:  {fb['example_rewrite']}",
-            f"⭐ STAR:        {star_line}",
-        ]
+        lines = [f"\n✅ Strength:    {fb['strength']}", f"🔧 Improve:     {fb['improvement']}"]
+        if fb.get("example_rewrite"):
+            lines.append(f"✍️  Try saying:  {fb['example_rewrite']}")
+        if star := fb.get("star_check"):
+            star_line = "  ".join(f"{'✓' if star[k] else '✗'} {k.title()}" for k in ("situation", "task", "action", "result"))
+            lines.append(f"⭐ STAR:        {star_line}")
         if fb.get("delivery_tip"):
             lines.append(f"🗣  Delivery:    {fb['delivery_tip']}")
         lines.append(f"🔁 Next try:    {fb['retry_challenge']}")

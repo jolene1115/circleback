@@ -54,20 +54,30 @@ class QuestionResponse(BaseModel):
     question: NonEmptyText
 
 
+class InterviewContext(BaseModel):
+    topic: str = Field(default="Software internship", max_length=160)
+    context: str = Field(default="", max_length=3000)
+    focus: list[str] = Field(default_factory=list, max_length=20)
+    tone: str = Field(default="Supportive", max_length=80)
+    history: list[dict[str, str]] = Field(default_factory=list, max_length=8)
+
+
 # POST /api/interview/feedback
 class InterviewFeedbackRequest(BaseModel):
     sessionId: Optional[NonEmptyText] = None
     question: NonEmptyText
     transcript: NonEmptyText  # the "transcript" field from /api/transcribe
     metrics: Optional[Metrics] = None  # optional: pass /api/transcribe's metrics through
+    interview: Optional[InterviewContext] = None
 
 
 class InterviewFeedbackResponse(BaseModel):
     strength: NonEmptyText
     improvement: NonEmptyText
-    example_rewrite: NonEmptyText  # one of their sentences, rewritten the way a strong candidate would say it
+    # Extras: the AI always returns these, but they're optional so 3-field clients/saves still validate.
+    example_rewrite: Optional[str] = None  # one of their sentences, rewritten the way a strong candidate would say it
     retry_challenge: NonEmptyText
-    star_check: StarCheck
+    star_check: Optional[StarCheck] = None
     delivery_tip: Optional[str] = None  # only when pace or filler words were off
 
 
