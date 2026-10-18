@@ -41,6 +41,7 @@ export default function SetupPage({Character}){
 
   <section className="setup-advanced setup-session-settings"><div><div><h3 id="question-count-label">Number of questions</h3><div className="setup-kind question-count-options" role="group" aria-labelledby="question-count-label">{[1,3,5,10].map(n=><button type="button" key={n} aria-pressed={Number(config.rounds)===n} onClick={()=>update({rounds:String(n)})}>{n}</button>)}</div></div></div></section>
   <label className="setup-permission"><input type="checkbox" required/><span>Audio, answers, and any resume text are sent to Gemini for transcription and feedback.</span></label>
+  <label className="setup-feedback-choice">Feedback<select aria-label="Feedback timing" value={config.feedbackMode||'summary'} onChange={e=>update({feedbackMode:e.target.value})}><option value="summary">After the interview</option><option value="each">After each answer</option></select></label>
   {health&&!health.keyConfigured&&<p role="alert" className="error">Set up an API key on the server to start.</p>}{error&&<p role="alert" className="error">{error}</p>}
   <footer className="setup-start"><span>{config.rounds} {config.rounds==='1'?'question':'questions'}</span><button className="main-button" type="submit" disabled={busy||uploading||!health?.keyConfigured||(config.type==='resume'&&!config.resumeText?.trim())}>{busy?'Preparing...':'Start interview'}<ArrowRight size={18}/></button></footer>
  </form></div>;

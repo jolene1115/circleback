@@ -25,6 +25,7 @@ let state = {
     context: '',
     rounds: '3',
     tone: 'Supportive',
+    feedbackMode: 'summary',
   },
   // Public speaking setup: what the speech is about, the points to make, optional limit (seconds).
   speech: {context: '', points: [], timeLimitSec: ''},

@@ -50,8 +50,8 @@ export default function MiniFeedback({feedback, answer, last, onContinue, contin
           </div>
           {metrics && (
             <div className="mini-stats">
-              <Stat label="Duration" value={Math.round(metrics.durationSec) + 's'} />
-              <Stat label="Average pace" value={metrics.wordsPerMinute} unit="wpm" />
+              <Stat label="Duration" value={metrics.durationSec > 0 ? Math.round(metrics.durationSec) + 's' : 'Not measured'} />
+              <Stat label="Average pace" value={metrics.durationSec > 0 ? metrics.wordsPerMinute : 'Not measured'} unit={metrics.durationSec > 0 ? 'wpm' : undefined} />
               <Stat label="Possible fillers" value={metrics.fillerCount} />
             </div>
           )}
@@ -73,7 +73,7 @@ export default function MiniFeedback({feedback, answer, last, onContinue, contin
                   ) : (
                     <span className="mini-missing">
                       <Minus />
-                      Add detail
+                      {star[part] === false ? 'Add detail' : 'Not assessed'}
                     </span>
                   )}
                 </li>

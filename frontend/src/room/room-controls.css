@@ -1,0 +1,17 @@
+body.moon-immersive .moon-session-controls.room-tools{display:flex;flex-direction:column;flex-wrap:nowrap;width:44px;gap:8px}
+.room-tools .room-tool{position:relative;display:grid;place-items:center;flex:none;width:44px;height:44px;padding:0;border:1px solid transparent;border-radius:6px;background:transparent;color:#a8b7c5;cursor:pointer;transition:background .15s,color .15s}
+.room-tools .room-tool svg{width:20px;height:20px;stroke-width:1.7}
+.room-tools .room-tool:hover:not(:disabled),.room-tools .room-tool:focus-visible{background:#ffffff0d;color:#f1f5f8}
+.room-tools .room-tool[aria-pressed=true],.room-tools .room-tool[aria-checked=true]{color:#e4edf3}
+.room-tools .room-tool:disabled{color:#9eabb7;opacity:.6;cursor:default}
+.room-tool-state{position:absolute;right:5px;bottom:5px;width:5px;height:5px;border-radius:50%;background:#61717f}
+[aria-checked=true] .room-tool-state{background:#c6e3df;box-shadow:0 0 5px #c6e3df40}
+.room-tools-divider{width:18px;height:1px;background:#ffffff20;margin:5px auto}
+.room-tool-tip{position:absolute;right:calc(100% + 12px);top:50%;transform:translateY(-50%);padding:7px 10px;border:1px solid #ffffff15;border-radius:4px;background:#1b232c;color:#e4edf3;font-size:12px;font-weight:400;line-height:1.4;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .12s}
+.room-tool:hover .room-tool-tip,.room-tool:focus-visible .room-tool-tip{opacity:1}
+@media(max-width:600px),(max-height:500px){
+ body.moon-immersive .moon-session-controls.room-tools{flex-direction:row;width:auto;gap:4px}
+ .room-tools-divider{width:1px;height:18px;margin:auto 5px}
+ .room-tool-tip{right:0;top:calc(100% + 9px);transform:none;max-width:210px;white-space:normal;width:max-content}
+}
+@media(prefers-reduced-motion:reduce){.room-tools .room-tool,.room-tool-tip{transition:none}}
