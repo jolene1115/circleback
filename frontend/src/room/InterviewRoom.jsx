@@ -36,11 +36,16 @@ function useFigureState() {
   return value;
 }
 
-export default function InterviewRoom({opening}) {
-  const {config} = useAppState();
-  const figureState = useFigureState();
+/** Speech practice shows (and speaks) this prompt instead of an interview question. */
+const speechPrompt = topic => `Whenever you're ready, give your speech: ${topic}`;
 
-  const [question, setQuestion] = useState(opening);
+/** The practice room. mode 'interview': answer AI questions; 'speaking': rehearse a speech, try again. */
+export default function InterviewRoom({opening, mode = 'interview'}) {
+  const {config, speech: speechSetup} = useAppState();
+  const figureState = useFigureState();
+  const speechMode = mode === 'speaking';
+
+  const [question, setQuestion] = useState(speechMode ? speechPrompt(opening) : opening);
   const [turns, setTurns] = useState([]);
   const [answer, setAnswer] = useState('');
   const [autoSpeak, setAutoSpeak] = useState(autoSpeakPreference);
@@ -350,23 +355,40 @@ export default function InterviewRoom({opening}) {
       if (!spoken) throw Error('No speech transcribed yet. Please record your answer.');
       stopSpeech();
       setFigureState('thinking');
-      const history = live.current.turns.map(t => ({question: t.q, answer: t.a}));
-      const result = await request('interview/feedback', {
-        question: live.current.question,
-        transcript: spoken,
-        interview: {topic: currentTopic(config), context: config.context, focus: focusList(config), tone: config.tone, history},
-        durationSec: answerSeconds.current || undefined,
-      });
-      if (!mounted.current) return;
-      if (['strength', 'improvement', 'retry_challenge'].some(k => typeof result[k] !== 'string' || !result[k].trim()))
-        throw Error('The server returned incomplete feedback. Please try again.');
+      const durationSec = answerSeconds.current || undefined;
+      let result;
+      if (speechMode) {
+        result = await request('speaking/feedback', {
+          context: speechSetup.context.trim(),
+          points: speechSetup.points,
+          transcript: spoken,
+          durationSec,
+          timeLimitSec: speechSetup.timeLimitSec ? Number(speechSetup.timeLimitSec) : undefined,
+        });
+        if (!mounted.current) return;
+        if (typeof result.summary !== 'string' || !Array.isArray(result.strengths) || !Array.isArray(result.improvements))
+          throw Error('The server returned incomplete feedback. Please try again.');
+      } else {
+        const history = live.current.turns.map(t => ({question: t.q, answer: t.a}));
+        result = await request('interview/feedback', {
+          question: live.current.question,
+          transcript: spoken,
+          interview: {topic: currentTopic(config), context: config.context, focus: focusList(config), tone: config.tone, history},
+          durationSec,
+        });
+        if (!mounted.current) return;
+        if (['strength', 'improvement', 'retry_challenge'].some(k => typeof result[k] !== 'string' || !result[k].trim()))
+          throw Error('The server returned incomplete feedback. Please try again.');
+      }
       stopEverything();
-      const nextTurns = [...live.current.turns, {q: live.current.question, a: spoken, feedback: result}];
+      // Speech attempts have no question; the summary page labels them "Your speech".
+      const turn = {q: speechMode ? '' : live.current.question, a: spoken, feedback: result, metrics: result.metrics};
+      const nextTurns = [...live.current.turns, turn];
       setTurns(nextTurns);
       setAnswer('');
       answerSeconds.current = 0;
       setFigureState('listening');
-      setFeedback({data: result, last: nextTurns.length >= Number(config.rounds)});
+      setFeedback({data: result, last: !speechMode && nextTurns.length >= Number(config.rounds)});
     } catch (err) {
       if (mounted.current) {
         setError(err.message);
@@ -384,7 +406,7 @@ export default function InterviewRoom({opening}) {
       finishSession(turns);
       return;
     }
-    setQuestion(data.retry_challenge);
+    if (!speechMode) setQuestion(data.retry_challenge);
     setSpokenThrough(autoSpeakPreference ? -1 : Infinity);
     setMicStatus('Optional voice recording');
     setError('');
@@ -393,7 +415,7 @@ export default function InterviewRoom({opening}) {
 
   function finish() {
     if (!turns.length) {
-      toast('Answer at least one question before finishing.');
+      toast(speechMode ? 'Give your speech at least once before finishing.' : 'Answer at least one question before finishing.');
       return;
     }
     finishSession(turns);
@@ -471,7 +493,7 @@ export default function InterviewRoom({opening}) {
             }}
           >
             <AudioLines />
-            <span>cadence</span>
+            <span>circleback</span>
           </a>
           <nav aria-label="Main navigation">
             <button className="nav-item " data-go="home" onClick={() => go('home')}>
@@ -493,8 +515,8 @@ export default function InterviewRoom({opening}) {
           <div className="content">
             <div className="page-head">
               <div>
-                <h1>{currentTopic(config)}</h1>
-                <p>One conversation. One question at a time.</p>
+                <h1>{speechMode ? speechSetup.context : currentTopic(config)}</h1>
+                <p>{speechMode ? 'Rehearse, get feedback, try again.' : 'One conversation. One question at a time.'}</p>
               </div>
               <div className="moon-session-controls">
                 <details className="moon-menu" ref={menu} onKeyDown={closeMenuOnEscape}>
@@ -550,12 +572,14 @@ export default function InterviewRoom({opening}) {
               <section>
                 <div className="section-heading">
                   <span className="small-label">
-                    Question {turns.length + (feedback ? 0 : 1)} of {config.rounds}
+                    {speechMode
+                      ? `Attempt ${turns.length + (feedback ? 0 : 1)}`
+                      : `Question ${turns.length + (feedback ? 0 : 1)} of ${config.rounds}`}
                   </span>
                   <span className="sample-label">Sample conversation</span>
                 </div>
                 <div className="journey">
-                  {Array.from({length: Number(config.rounds)}, (_, i) => (
+                  {Array.from({length: speechMode ? 0 : Number(config.rounds)}, (_, i) => (
                     <span key={i} className={i <= turns.length - (feedback ? 1 : 0) ? 'done' : ''} />
                   ))}
                 </div>
@@ -668,21 +692,30 @@ export default function InterviewRoom({opening}) {
                       Use sample answer
                     </button>
                   </form>
-                  {feedback && <MiniFeedback feedback={feedback.data} last={feedback.last} onContinue={nextQuestion} />}
+                  {feedback && (
+                    <MiniFeedback
+                      feedback={feedback.data}
+                      answer={turns.at(-1)?.a || ''}
+                      last={feedback.last}
+                      onContinue={nextQuestion}
+                      continueLabel={speechMode ? 'Try again' : undefined}
+                      onFinish={speechMode ? () => finishSession(turns) : undefined}
+                    />
+                  )}
                 </div>
               </section>
               <aside className="context-panel">
-                <h3>Your focus</h3>
+                <h3>{speechMode ? 'Key points' : 'Your focus'}</h3>
                 <div className="tag-list">
-                  {focus.map(f => (
+                  {(speechMode ? speechSetup.points : focus).map(f => (
                     <span key={f}>{f}</span>
                   ))}
                 </div>
                 <h3>Your context</h3>
-                <p>{config.context || 'No background added.'}</p>
+                <p>{(speechMode ? speechSetup.context : config.context) || 'No background added.'}</p>
                 <h3>Session notes</h3>
                 <p>
-                  {turns.length - (feedback ? 1 : 0)} answers so far
+                  {turns.length - (feedback ? 1 : 0)} {speechMode ? 'attempts' : 'answers'} so far
                   <br />
                   Reflection at the end
                 </p>
@@ -691,7 +724,7 @@ export default function InterviewRoom({opening}) {
             </div>
             <footer className="app-foot">
               <span>Find your voice, one conversation at a time.</span>
-              <span>English · Cadence</span>
+              <span>English · CircleBack</span>
             </footer>
           </div>
         </main>

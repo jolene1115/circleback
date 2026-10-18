@@ -1,46 +1,31 @@
 import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {
   AudioLines,
-  ArrowLeft,
   ArrowRight,
   ArrowUpRight,
   Bookmark,
-  BriefcaseBusiness,
-  Check,
-  ChevronDown,
-  GraduationCap,
   MessagesSquare,
   MicVocal,
   Pencil,
-  PenTool,
-  SlidersHorizontal,
   Square,
-  Users,
   Volume2,
 } from 'lucide-react';
 
 import Figure from './components/Figure.jsx';
 import InkEditor from './components/InkEditor.jsx';
 import InterviewerCollection from './components/InterviewerCollection.jsx';
-import {checkHealth, request} from './engine/api.js';
 import {setFigureState, welcome} from './engine/figure.js';
 import {getInterviewerName, onInterviewerChange} from './engine/ink.js';
 import {currentVoice, onVoicesChange, selectVoice, speak, stopVoice, voiceId, voices} from './engine/voice.js';
 import Feedback from './Feedback.jsx';
 import SetupPage from './SetupPage.jsx';
+import SpeakingSetup from './SpeakingSetup.jsx';
 import InterviewRoom from './room/InterviewRoom.jsx';
 import {
-  configure,
-  currentTopic,
-  focusList,
-  focusOptions,
-  getState,
   go,
   retryQuestion,
   retrySession,
   selectSession,
-  startInterview,
-  topicOptions,
   useAppState,
 } from './store.js';
 
@@ -56,10 +41,10 @@ function Navigation({view}) {
         }}
       >
         <AudioLines />
-        <span>cadence</span>
+        <span>circleback</span>
       </a>
       <nav aria-label="Main navigation">
-        <button className={'nav-item ' + (['home', 'setup'].includes(view) ? 'active' : '')} onClick={() => go('home')}>
+        <button className={'nav-item ' + (['home', 'setup', 'speaking'].includes(view) ? 'active' : '')} onClick={() => go('home')}>
           Practice
         </button>
         <button className={'nav-item ' + (['history', 'summary'].includes(view) ? 'active' : '')} onClick={() => go('history')}>
@@ -74,12 +59,13 @@ function Home({exploring, setExploring}) {
   return (
     <>
       <section className="workspace-intro">
+        <p className="landing-description landing-corner" hidden={exploring}>
+          <strong>Your personal speaking coach.</strong>
+          <span>A little practice for your next big conversation.</span>
+        </p>
         <div className="workspace-title" hidden={exploring}>
-          <h1>Cadence</h1>
-          <p className="landing-description">
-            <strong>Your personal speaking coach.</strong>
-            <span>A little practice for your next big conversation.</span>
-          </p>
+          <span className="landing-tagline">Practice. Reflect. Repeat.</span>
+          <h1>CircleBack</h1>
           <button
             className="main-button explore-button"
             onPointerEnter={() => welcome('hover')}
@@ -110,8 +96,7 @@ function Home({exploring, setExploring}) {
               <h2>Public speaking</h2>
               <MicVocal />
             </div>
-            <small className="choice-soon">Coming soon</small>
-            <ChoiceHand />
+                        <ChoiceHand />
           </button>
         </section>
       )}
@@ -257,179 +242,6 @@ function Character() {
   );
 }
 
-function Setup() {
-  const {config} = useAppState();
-  const [health, setHealth] = useState('checking'),
-    [busy, setBusy] = useState(false),
-    [error, setError] = useState('');
-  const icons = [PenTool, BriefcaseBusiness, GraduationCap, Users];
-  useEffect(() => {
-    let active = true;
-    checkHealth().then(result => {
-      if (active) setHealth(result);
-    });
-    return () => {
-      active = false;
-    };
-  }, []);
-  async function start(e) {
-    e.preventDefault();
-    if (busy || health !== 'ready') return;
-    setBusy(true);
-    setError('');
-    try {
-      const result = await request('interview/question', {
-        topic: currentTopic(config),
-        context: config.context,
-        focus: focusList(config),
-        tone: config.tone,
-        history: [],
-      });
-      if (getState().view !== 'setup') return;
-      if (!result.question?.trim()) throw Error('The server returned an empty question.');
-      startInterview(result.question);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setBusy(false);
-    }
-  }
-  return (
-    <>
-      <div className="setup-heading">
-        <button className="icon-button" aria-label="Back to practice" onClick={() => go('home')}>
-          <ArrowLeft />
-        </button>
-        <h1>Interview</h1>
-      </div>
-      <div className="setup-layout">
-        <form id="setupForm" onSubmit={start}>
-          <fieldset className="setup-topic">
-            <legend>Topic</legend>
-            <div className="topic-grid">
-              {topicOptions.map(([topic], i) => {
-                const Icon = icons[i],
-                  active = config.topic === topic && !config.custom;
-                return (
-                  <button
-                    type="button"
-                    key={topic}
-                    className={'topic ' + (active ? 'selected' : '')}
-                    aria-pressed={active}
-                    onClick={() => configure({topic, custom: ''})}
-                  >
-                    <Icon />
-                    <span>{topic}</span>
-                    <Check />
-                  </button>
-                );
-              })}
-            </div>
-            <input
-              id="custom"
-              aria-label="Custom topic"
-              maxLength={160}
-              placeholder="Or add your own..."
-              value={config.custom}
-              onChange={e => configure({custom: e.target.value})}
-            />
-          </fieldset>
-          <fieldset className="setup-focus">
-            <legend>Focus</legend>
-            <div className="focus-options">
-              {focusOptions.map(f => (
-                <label className="focus-option" key={f}>
-                  <input
-                    type="checkbox"
-                    checked={config.focus.includes(f)}
-                    onChange={e =>
-                      configure({focus: e.target.checked ? [...config.focus, f] : config.focus.filter(v => v !== f)})
-                    }
-                  />
-                  {f}
-                </label>
-              ))}
-            </div>
-          </fieldset>
-          <details className="setup-details">
-            <summary>
-              <SlidersHorizontal />
-              Personalize <ChevronDown />
-            </summary>
-            <div className="setup-details-body">
-              <label className="field-label" htmlFor="extra">
-                Other focus
-              </label>
-              <input
-                id="extra"
-                value={config.extra}
-                maxLength={200}
-                placeholder="What else matters?"
-                onChange={e => configure({extra: e.target.value})}
-              />
-              <label className="field-label" htmlFor="context">
-                Background
-              </label>
-              <textarea
-                id="context"
-                value={config.context}
-                maxLength={3000}
-                placeholder="Your experience or the role you're pursuing"
-                onChange={e => configure({context: e.target.value})}
-              />
-              <div className="inline-fields">
-                <div>
-                  <label className="field-label" htmlFor="rounds">
-                    Questions
-                  </label>
-                  <select id="rounds" value={config.rounds} onChange={e => configure({rounds: e.target.value})}>
-                    {[4, 6, 8].map(n => (
-                      <option key={n}>{n}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="field-label" htmlFor="tone">
-                    Style
-                  </label>
-                  <select id="tone" value={config.tone} onChange={e => configure({tone: e.target.value})}>
-                    <option>Supportive</option>
-                    <option>Direct</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          </details>
-          <label className="team-consent">
-            <input type="checkbox" required />
-            <span>Send my audio and answers to the AI service.</span>
-          </label>
-          <div className="setup-footer">
-            <span className="small-label" role="status">
-              {
-                {
-                  checking: 'Checking connection...',
-                  ready: 'Ready to practice',
-                  key: 'API key needed on server',
-                  offline: 'Server unavailable. Refresh to retry.',
-                }[health]
-              }
-            </span>
-            <button type="submit" className="main-button" disabled={busy || health !== 'ready'}>
-              {busy ? 'Preparing...' : 'Begin'}
-              <ArrowRight />
-            </button>
-          </div>
-          <p className="error" role="alert">
-            {error}
-          </p>
-        </form>
-        <Character />
-      </div>
-    </>
-  );
-}
-
 function History({sessions}) {
   return (
     <>
@@ -449,7 +261,8 @@ function History({sessions}) {
               <div>
                 <h3>{s.topic}</h3>
                 <p>
-                  {s.date} · {s.turns.length} answers
+                  {s.mode === 'speaking' ? 'Speech · ' : ''}
+                  {s.date} · {s.turns.length} {s.mode === 'speaking' ? 'attempts' : 'answers'}
                 </p>
               </div>
               <div className="row-end">
@@ -482,9 +295,9 @@ export default function App() {
     document.body.dataset.theme = 'moon';
     document.body.className =
       'moon moon-workspace' +
-      (view === 'setup' ? ' moon-setup' : view === 'home' ? (exploring ? ' moon-exploring' : ' moon-landing') : '');
+      (view === 'setup' || view === 'speaking' ? ' moon-setup' : view === 'home' ? (exploring ? ' moon-exploring' : ' moon-landing') : '');
   }, [view, exploring]);
-  if (view === 'room') return <InterviewRoom key={interview.id} opening={interview.opening} />;
+  if (view === 'room') return <InterviewRoom key={interview.id} opening={interview.opening} mode={interview.mode} />;
   return (
     <div className="shell">
       <Navigation view={view} />
@@ -509,18 +322,7 @@ export default function App() {
             <History sessions={sessions} />
           )
           ) : (
-            <>
-              <div className="page-head">
-                <h1>Public speaking</h1>
-              </div>
-              <div className="workspace-history-empty">
-                <MicVocal />
-                <h2>Coming next</h2>
-                <button className="text-button" onClick={() => go('setup')}>
-                  Practice an interview <ArrowRight />
-                </button>
-              </div>
-            </>
+            <SpeakingSetup />
           )}
         </div>
       </main>

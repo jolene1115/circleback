@@ -18,10 +18,17 @@ def feedback(request: SpeakingFeedbackRequest, client=Depends(get_client)):
     if request.sessionId:
         db.get_session(request.sessionId, "speaking")  # fail fast before spending a Gemini call
 
-    metrics = request.metrics.model_dump() if request.metrics else None
+    # Pace and filler numbers are computed in code from the transcript and the recording length.
+    duration = request.metrics.durationSec if request.metrics else (request.durationSec or 0)
+    metrics = compute_metrics(request.transcript, duration) if duration > 0 else None
     try:
         result = speaking_feedback(
-            client, request.context, request.points, request.transcript, metrics, request.timeLimitSec
+            client,
+            request.context,
+            request.points,
+            request.transcript,
+            metrics.model_dump() if metrics else None,
+            request.timeLimitSec,
         )
     except errors.APIError as exc:
         raise model_error(exc) from exc
@@ -29,17 +36,17 @@ def feedback(request: SpeakingFeedbackRequest, client=Depends(get_client)):
         raise HTTPException(502, "Gemini returned invalid feedback.") from exc
 
     time_check = None
-    if request.timeLimitSec and request.metrics:
-        duration = request.metrics.durationSec
+    if request.timeLimitSec and duration > 0:
         time_check = TimeCheck(
             limitSec=request.timeLimitSec,
-            durationSec=duration,
+            durationSec=round(duration, 1),
             overBySec=round(duration - request.timeLimitSec, 1),
         )
-    validated = SpeakingFeedbackResponse(**result.model_dump(), timeCheck=time_check)
+    validated = SpeakingFeedbackResponse(
+        **result.model_dump(), timeCheck=time_check, metrics=metrics or compute_metrics(request.transcript, 0)
+    )
 
     if request.sessionId:
-        saved_metrics = compute_metrics(request.transcript, request.metrics.durationSec if request.metrics else 0)
         db.save_attempt(request.sessionId, None, request.transcript,
-                        saved_metrics.model_dump(), validated.model_dump(), mode="speaking")
+                        validated.metrics.model_dump(), validated.model_dump(), mode="speaking")
     return validated
