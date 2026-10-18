@@ -61,23 +61,3 @@ body.moon-immersive .moon-dialogue .answer-controls{padding-top:20px}
 @media(max-width:600px){body.moon-immersive .moon-dialogue{top:55%;width:88%;gap:18px}body.moon-immersive .moon-dialogue .question-stage{height:clamp(90px,16dvh,132px)}body.moon-immersive .moon-dialogue .question-stage h2{font-size:21px}body.moon-immersive .moon-dialogue #liveAnswer{font-size:18px;height:54px}body.moon-immersive .moon-dialogue .answer-controls{padding-top:16px}}
 @media(max-height:650px){body.moon-immersive .moon-dialogue{top:52%;gap:12px}body.moon-immersive .moon-dialogue .question-stage{height:72px}body.moon-immersive .moon-dialogue .question-stage h2{font-size:20px}body.moon-immersive .moon-dialogue #liveAnswer{height:48px;font-size:17px}body.moon-immersive .moon-dialogue .answer-controls{padding-top:12px}body.moon-immersive .moon-dialogue .answer-controls button[type=submit]{width:44px;min-width:44px;height:44px}}
 
-/* Feedback shown after each answer (team-api.js showFeedback) */
-.answer-feedback{border-left:3px solid var(--accent);background:var(--accent-soft);padding:20px 24px;display:flex;flex-direction:column;gap:14px}
-.answer-feedback h3{margin:0;font-size:15px}
-.answer-feedback-rows{display:flex;flex-direction:column;gap:12px;max-height:34dvh;overflow-y:auto;padding-right:6px}
-.answer-feedback-row small{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
-.answer-feedback-row p{margin:0;font-size:15px;line-height:1.6}
-.answer-feedback .main-button{align-self:flex-end}
-.answer-feedback-stats{margin:0;font-size:13px;color:var(--muted)}
-.answer-feedback-star{display:flex;flex-wrap:wrap;gap:8px}
-.answer-feedback-star span{font-size:12px;padding:3px 10px;border-radius:999px;border:1px solid var(--line)}
-.answer-feedback-star .hit{border-color:var(--accent);color:var(--accent)}
-.answer-feedback-star .miss{opacity:.6}
-.moon .answer-feedback-stats{color:#9fb3c3}
-.moon .answer-feedback-star span{border-color:#3a444c;color:#9fb3c3}
-.moon .answer-feedback-star .hit{border-color:#b7c8d5;color:#edf1f4}
-.moon .answer-feedback{background:#252c32;color:#dce8f0;border-color:#b7c8d5}
-.moon .answer-feedback-row small{color:#9fb3c3}
-body.moon-immersive .moon-dialogue .answer-feedback{width:100%}
-body.moon-immersive .moon-dialogue.has-feedback{top:auto;bottom:4dvh;gap:16px}
-@media(max-height:650px){body.moon-immersive .answer-feedback-rows{max-height:24dvh}}

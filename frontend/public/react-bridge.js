@@ -2,6 +2,7 @@
 const engineRoomRender=render;
 render=()=>window.dispatchEvent(new Event('cadence:navigate'));
 theme='moon';view='home';config.context='';
+function useSessionConfig(s){config.custom=s.topic;config.context=s.context||'';config.focus=s.focus.filter(f=>focusOptions.includes(f));config.extra=s.focus.filter(f=>!focusOptions.includes(f)).join(', ');}
 window.cadence={
  snapshot:()=>({view,config:structuredClone(config),sessions,selectedSession,name:interviewerName}),
  go,
@@ -15,7 +16,8 @@ window.cadence={
  edit:openInkEditor,
  collection:openInterviewerCollection,
  selectSession:s=>{selectedSession=s;go('summary');},
- retry:s=>{config.custom=s.topic;config.context=s.context||'';config.focus=s.focus.filter(f=>focusOptions.includes(f));config.extra=s.focus.filter(f=>!focusOptions.includes(f)).join(', ');go('setup');},
+ retry:s=>{useSessionConfig(s);go('setup');},
+ retryQuestion:(s,q)=>{useSessionConfig(s);window.cadence.start(q);},
  topicOptions,focusOptions,
  dispose:()=>{cleanup();moonCloseMic();immersiveObserver?.disconnect();},
  request:teamRequest

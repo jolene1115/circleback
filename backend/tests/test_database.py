@@ -10,7 +10,8 @@ from backend.routers import interview, speaking
 
 FB = dict(strength='Clear example', improvement='Add detail', example_rewrite='I built [project] for [users].',
           retry_challenge='Explain the outcome',
-          star_check=dict(situation=True, task=False, action=True, result=False), delivery_tip=None)
+          star_check=dict(situation=True, task=False, action=True, result=False),
+          organization_tip='Project, your role, what you did, the outcome.', delivery_tip=None)
 SPEAKING_FB = dict(summary='Clear', strengths=['Structure'], improvements=['Slow down'],
                    pointsCovered=[dict(point='intro', covered=True, evidence='"Hello everyone"')],
                    exampleRewrite='Hello everyone, today I will cover [topic].', deliveryTip=None,

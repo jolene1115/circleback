@@ -4,7 +4,9 @@ let moonState='listening',moonAnimation=0,moonWait=null,moonSpeech=0,moonProgres
 let moonAuto=true,moonAutoTimer=null,moonStartGuard=null,moonReadKey=null,moonUtterance=null,moonStateAt=0,moonHoldUntil=0;
 let moonAutoRecord=true,moonRecordTimer=null,moonImmersive=false;
 let moonCaptionGuard=null;
-function moonCaptionThrough(index){if(Number.isFinite(index))moonWordPulse=1;document.querySelectorAll('.moon-word').forEach(word=>word.classList.toggle('is-spoken',Number(word.dataset.start)<=index));}
+function moonCaptionThrough(index){if(Number.isFinite(index))moonWordPulse=1;let current=null;document.querySelectorAll('.moon-word').forEach(word=>{const spoken=Number(word.dataset.start)<=index;word.classList.toggle('is-spoken',spoken);if(spoken)current=word;});if(Number.isFinite(index))moonFollowWord(current);}
+// Keep the word being spoken centered in the question box when the question is longer than the box.
+function moonFollowWord(word){const box=word?.parentElement;if(!box||box.scrollHeight<=box.clientHeight+1)return;const b=box.getBoundingClientRect(),w=word.getBoundingClientRect();box.scrollTo({top:Math.max(0,box.scrollTop+(w.top-b.top)-(box.clientHeight-w.height)/2),behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});}
 let moonMicSource=null,moonMicRequest=null,moonMicEpoch=0;
 const moonAcquireBase=acquireRecordingStream;
 function moonCloseMic(){moonMicEpoch++;moonMicSource?.getTracks().forEach(track=>track.stop());moonMicSource=null;moonMicRequest=null;}

@@ -11,15 +11,14 @@ async function teamRequest(path,payload){
 // Show the AI's feedback in place of the answer box; `next` runs when the user continues.
 function showFeedback(feedback,last,next){
  const form=$('#answerForm');if(!form)return next();
- const rows=[['Strength',feedback.strength],['Next step',feedback.improvement]];
- if(feedback.example_rewrite)rows.push(['Try saying',feedback.example_rewrite]);
- if(feedback.delivery_tip)rows.push(['Delivery',feedback.delivery_tip]);
+ // Same look as the end-of-session review (src/Review.jsx, review.css), condensed for one answer.
  const m=feedback.metrics,star=feedback.star_check;
- const fillers=m?Object.entries(m.fillerWords).map(([w,n])=>esc(w)+' ×'+n).join(', '):'';
- const stats=m?'<p class="answer-feedback-stats">'+m.wordsPerMinute+' words/min · '+m.fillerCount+' filler'+(m.fillerCount===1?'':'s')+(fillers?' ('+fillers+')':'')+' · '+Math.round(m.durationSec)+'s</p>':'';
- const starChips=star?'<div class="answer-feedback-star" aria-label="STAR check">'+['situation','task','action','result'].map(k=>'<span class="'+(star[k]?'hit':'miss')+'">'+(star[k]?'✓ ':'✗ ')+k[0].toUpperCase()+k.slice(1)+'</span>').join('')+'</div>':'';
- const panel=document.createElement('section');panel.className='answer-feedback';panel.setAttribute('aria-live','polite');
- panel.innerHTML='<h3>Feedback</h3>'+stats+starChips+'<div class="answer-feedback-rows">'+rows.map(([label,text])=>'<div class="answer-feedback-row"><small>'+label+'</small><p>'+esc(text)+'</p></div>').join('')+'</div><button type="button" class="main-button">'+(last?'See summary ':'Next question ')+icon('arrow-right')+'</button>';
+ const block=(cls,iconName,label,text)=>'<div class="mini-block"><h3 class="'+cls+'">'+icon(iconName)+label+'</h3><p>'+esc(text)+'</p></div>';
+ const stat=(label,value,unit)=>'<div><small>'+label+'</small><strong>'+value+(unit?'<span>'+unit+'</span>':'')+'</strong></div>';
+ const stats=m?'<div class="mini-stats">'+stat('Duration',Math.round(m.durationSec)+'s')+stat('Average pace',m.wordsPerMinute,'wpm')+stat('Possible fillers',m.fillerCount)+'</div>':'';
+ const structure=star?'<aside class="mini-side"><h4>Story structure</h4><ul>'+['situation','task','action','result'].map(k=>'<li><span>'+k[0].toUpperCase()+k.slice(1)+'</span>'+(star[k]?'<span class="mini-present">'+icon('check')+'Present</span>':'<span class="mini-missing">'+icon('minus')+'Add detail</span>')+'</li>').join('')+'</ul></aside>':'';
+ const panel=document.createElement('section');panel.className='answer-feedback';panel.setAttribute('aria-live','polite');panel.setAttribute('aria-label','Feedback on your answer');
+ panel.innerHTML='<div class="mini-body"><div class="mini-main">'+block('mini-keep','check','Keep this',feedback.strength)+block('mini-next','move-up-right','Next time',feedback.improvement)+stats+'</div>'+structure+'</div><div class="mini-foot"><button type="button" class="mini-continue">'+(last?'See summary':'Next question')+icon('arrow-right')+'</button></div>';
  form.style.display='none';form.after(panel);lucide.createIcons();
  const dialogue=panel.closest('.moon-dialogue');dialogue?.classList.add('has-feedback');
  const button=panel.querySelector('button');button.focus();

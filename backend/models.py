@@ -81,6 +81,7 @@ class InterviewFeedbackResponse(BaseModel):
     example_rewrite: Optional[str] = None  # one of their sentences, rewritten the way a strong candidate would say it
     retry_challenge: NonEmptyText
     star_check: Optional[StarCheck] = None
+    organization_tip: Optional[str] = None  # how to structure this answer into short spoken parts
     delivery_tip: Optional[str] = None  # only when pace or filler words were off
 
 

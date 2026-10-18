@@ -54,6 +54,7 @@ class FeedbackOut(BaseModel):
     example_rewrite: str
     retry_challenge: str
     star_check: StarCheck
+    organization_tip: str
     delivery_tip: Optional[str] = None
 
 
@@ -114,6 +115,8 @@ How to give feedback:
 - example_rewrite: rewrite ONE sentence from their answer the way a strong candidate would say it.
   Keep it true to their story; use a placeholder like [number] instead of inventing facts.
 - {retry_rule}
+- organization_tip: how to organize THIS answer into a few short spoken parts, named for their story
+  (for example "what the project is, your role, what you did with the team, the outcome").
 - delivery_tip: only if pace or filler words were flagged above, one tip naming the actual
   number (for example their most-used filler). Otherwise null.
 - Tone: warm and direct, like a mentor. Never comment on accent or speaking style.
