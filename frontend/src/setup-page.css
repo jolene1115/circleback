@@ -44,3 +44,5 @@
  .moon-setup .setup-character .edit-interviewer,
  .moon-setup .setup-character .collection-interviewer{right:-58px}
 }
+
+.speech-points{list-style:none;margin:0 0 6px;padding:0;display:grid;gap:4px}.speech-points li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #2b3138;color:#dbe3ea;font-size:14px}.speech-points span{overflow-wrap:anywhere;min-width:0}.speech-points button{flex:none;width:28px;height:28px;display:grid;place-items:center;background:none;border:0;color:#9aa6b2;cursor:pointer}.speech-points button:hover{color:#edf2f6}.speech-add-point{max-width:420px}

@@ -1,16 +1,8 @@
-// App state shared by the pages: current view, interview setup, and saved sessions.
+// App state shared by the pages: current view, interview and speech setup, and saved sessions.
 import {useSyncExternalStore} from 'react';
 import {toast} from './engine/toast.js';
 
 const SESSIONS_KEY = 'cadence-sessions-v1';
-
-export const topicOptions = [
-  ['Design internship', 'Projects & creative thinking', 'pen-tool'],
-  ['First job interview', 'Experience & motivation', 'briefcase-business'],
-  ['Graduate school', 'Research & aspirations', 'graduation-cap'],
-  ['Leadership role', 'People & decision-making', 'users'],
-];
-export const focusOptions = ['Project experience', 'Teamwork', 'Problem solving', 'Motivation'];
 
 function loadSessions() {
   try {
@@ -34,10 +26,12 @@ let state = {
     rounds: '3',
     tone: 'Supportive',
   },
+  // Public speaking setup: what the speech is about, the points to make, optional limit (seconds).
+  speech: {context: '', points: [], timeLimitSec: ''},
   sessions: loadSessions(),
   selectedSession: null,
-  // A new interview gets a new id, so the room starts fresh.
-  interview: {id: 0, opening: ''},
+  // A new practice session gets a new id, so the room starts fresh. mode: 'interview' | 'speaking'.
+  interview: {id: 0, opening: '', mode: 'interview'},
 };
 const listeners = new Set();
 
@@ -74,9 +68,19 @@ export function configure(values) {
   update({config: {...state.config, ...values}});
 }
 
+export function configureSpeech(values) {
+  update({speech: {...state.speech, ...values}});
+}
+
 /** Open the interview room with this first question. */
 export function startInterview(opening) {
-  update({interview: {id: state.interview.id + 1, opening}});
+  update({interview: {id: state.interview.id + 1, opening, mode: 'interview'}});
+  go('room');
+}
+
+/** Open the room to practice the speech set up in `state.speech`. */
+export function startSpeech() {
+  update({interview: {id: state.interview.id + 1, opening: state.speech.context.trim(), mode: 'speaking'}});
   go('room');
 }
 
@@ -96,8 +100,13 @@ function useSessionConfig(session) {
   });
 }
 
-/** "Practice again": set up a new interview on the same topic. */
+/** "Practice again": set up a new session on the same topic. */
 export function retrySession(session) {
+  if (session.mode === 'speaking') {
+    configureSpeech({context: session.context || '', points: session.focus || [], timeLimitSec: session.timeLimitSec || ''});
+    go('speaking');
+    return;
+  }
   useSessionConfig(session);
   go('setup');
 }
@@ -109,14 +118,18 @@ export function retryQuestion(session, question) {
   startInterview(question);
 }
 
-/** Save a finished interview and show its review. */
+/** Save a finished session and show its review. */
 export function finishSession(turns) {
+  const speaking = state.interview.mode === 'speaking';
+  const {speech, config} = state;
   const entry = {
     id: String(Date.now()),
-    topic: currentTopic(),
+    mode: speaking ? 'speaking' : 'interview',
+    topic: speaking ? speech.context.trim() : currentTopic(),
     date: new Date().toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'}),
-    focus: focusList(),
-    context: state.config.context,
+    focus: speaking ? speech.points : focusList(),
+    context: speaking ? speech.context : config.context,
+    ...(speaking && speech.timeLimitSec ? {timeLimitSec: Number(speech.timeLimitSec)} : {}),
     turns: [...turns],
   };
   const sessions = [entry, ...state.sessions];

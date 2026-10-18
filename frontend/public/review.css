@@ -100,7 +100,12 @@
 .mini-present{color:var(--r-muted)}
 .mini-present svg{color:var(--r-ink)}
 .mini-missing{color:var(--r-amber)}
-.mini-foot{display:flex;justify-content:flex-end}
+.mini-foot{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.mini-toggle{display:inline-flex;align-items:center;gap:6px;padding:0;font:inherit;font-size:13px;color:var(--r-muted);background:none;border:0;cursor:pointer}
+.mini-toggle:hover{color:var(--r-ink)}
+.mini-answer{border-top:1px solid var(--r-line);padding-top:14px;max-height:22dvh;overflow-y:auto}
+.mini-answer h4{margin:0 0 8px;font-size:12px;font-weight:500;color:var(--r-muted)}
+.mini-answer p{margin:0;font-size:14px;line-height:1.7;color:var(--r-ink);white-space:pre-wrap;overflow-wrap:anywhere}
 .mini-continue{display:inline-flex;align-items:center;gap:10px;padding:10px 18px;font:inherit;font-size:14px;color:var(--r-ink);
   background:transparent;border:1px solid var(--r-border);border-radius:6px;cursor:pointer}
 .mini-continue:hover{border-color:var(--r-muted)}
@@ -112,3 +117,8 @@ body.moon-immersive .moon-dialogue.has-feedback{top:auto;bottom:4dvh;gap:16px}
 /* Interviewer's question: keep the word being spoken in view (moon.js moonCaptionThrough). */
 body.moon-immersive .question-stage h2{scrollbar-width:none}
 body.moon-immersive .question-stage h2::-webkit-scrollbar{display:none}
+.mini-actions{display:flex;gap:10px;align-items:center}
+.mini-secondary{border-color:transparent;color:var(--r-muted)}
+.mini-secondary:hover{color:var(--r-ink);border-color:var(--r-line)}
+.mini-side li span:first-child{min-width:0;overflow-wrap:anywhere;padding-right:8px}
+.mini-time{margin:16px 0 0;font-size:12px;color:var(--r-muted)}

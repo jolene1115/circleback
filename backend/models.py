@@ -105,6 +105,8 @@ class SpeakingFeedbackRequest(BaseModel):
     points: list[NonEmptyText] = []  # key points they intend to make
     transcript: NonEmptyText  # the "transcript" field from /api/transcribe
     metrics: Optional[Metrics] = None  # optional: pass /api/transcribe's metrics through
+    # Alternative to metrics: total recording length; the server computes metrics from the transcript.
+    durationSec: Optional[NonNegativeFloat] = None
     timeLimitSec: Optional[int] = None  # optional target length
 
 
@@ -125,6 +127,7 @@ class SpeakingFeedbackResponse(BaseModel):
     deliveryTip: Optional[str] = None  # only when pace, filler words or timing were off
     nextTry: NonEmptyText  # what to focus on in the next attempt
     timeCheck: Optional[TimeCheck] = None
+    metrics: Optional[Metrics] = None  # pace and fillers, computed in code from the transcript
 
 
 class CreateSessionRequest(BaseModel):
