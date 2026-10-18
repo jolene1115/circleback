@@ -1,6 +1,6 @@
 # zothacks-2026-team10
 
-PitchPerfect: practice interviews and public speaking, get AI feedback. See [project_plan.md](project_plan.md).
+CircleBack: practice interviews and public speaking, get AI feedback. See [project_plan.md](project_plan.md).
 
 The backend is **Python + FastAPI** in `backend/`.
 
