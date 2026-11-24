@@ -1,8 +1,33 @@
-# zothacks-2026-team10
+# CircleBack
 
-CircleBack: practice interviews and public speaking, get AI feedback. See [project_plan.md](project_plan.md).
+🏆 **2nd Place — ZotHacks 2026**
 
-The backend is **Python + FastAPI** in `backend/`.
+An AI-powered interview and public speaking practice platform that provides personalized feedback to help users improve their communication skills.
+
+**[Live Demo](https://circleback-zh26.vercel.app/)**
+
+## Features
+
+- AI-generated interview questions and personalized feedback
+- Resume-based interview preparation
+- Public speaking feedback on speaking pace, filler words, and key points covered
+- Practice history to review previous sessions
+
+## Tech Stack
+
+- **Frontend:** React, JavaScript
+- **Backend:** Python, FastAPI
+- **Database:** SQLite
+- **AI:** Google Gemini API
+
+## Team
+
+Developed by a team of four at ZotHacks 2026.
+
+---
+
+## Technical Documentation
+
 
 ## Setup
 
