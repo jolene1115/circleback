@@ -26,9 +26,6 @@ Developed by a team of four at ZotHacks 2026.
 
 ---
 
-## Technical Documentation
-
-
 ## Setup
 
 1. Install Python 3.12+ and `ffmpeg` (for the mic test script): `brew install ffmpeg`
